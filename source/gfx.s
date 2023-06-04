@@ -1,5 +1,6 @@
 	.include "equates.h"
 	.include "memory.h"
+	.include "6510mac.h"
 
 ;	.extern Chargen
 	.extern _binary_chargen_rom
@@ -32,7 +33,7 @@ GFX_init	;(called from main.c) only need to call once
 
 	mov r0,#NTR_VRAM
 	mov r1,#0
-	mov r2,#0xE0
+	mov r2,#0x8000
 	bl memset_					;clear
 	
 	ldr r0,=obj_base
@@ -50,8 +51,15 @@ GFX_init	;(called from main.c) only need to call once
 	add r1,r1,#128*8
 	str r1,[r0]
 
+	ldr r0,=scroll_ptr0
+	ldr r1,=scroll_buffer0
+	str r1,[r0],#4
+	add r1,r1,#256
+	str r1,[r0]
+
 	ldr r1,=tile_base
 	ldr r1,[r1]
+	add r1,r1,#0x1000		;offset the background so we have space for a tilemaped mode.
 	ldr r0,=bg2_ptr0
 	str r1,[r0],#4
 	add r1,r1,#0x20000
@@ -195,18 +203,51 @@ GFX_reset	;called with CPU reset
 	strh r0,[r1,#REG_BG2PD_OFFSET]
 	strh r0,[r1,#REG_BG3PD_OFFSET]
 
+	mov r3,#0x0410
+	strh r3,[r1,#REG_BLDCNT_OFFSET]		;OBJ blend to BG0
+	mov r3,#0x1000						;BG0=16, OBJ=0
+	strh r3,[r1,#REG_BLDALPHA_OFFSET]	;Alpha values
+
 
 ;	mov r0,#AGB_OAM
 ;	mov r1,#0x2c0
 ;	mov r2,#0x100
 ;	bl memset_		;no stray sprites please
-;	ldr r0,=OAM_BUFFER1
+;	ldr r0,=obj_buffer0
 ;	mov r2,#0x180
 ;	bl memset_
 
+	bl BorderInit
 ;	bl InitBGTiles
+	bl SpriteScaleInit
 	bl paletteinit	;do palette mapping
 	ldr pc,[sp],#4
+
+;----------------------------------------------------------------------------
+BorderInit
+;----------------------------------------------------------------------------
+	stmfd sp!,{r4-r5,lr}
+	ldr r5,=tile_base
+	ldr r5,[r5]
+	mov r0,#64			;first free tile after map
+	mov r1,#66			;first border tile
+	orr r2,r1,#0x0400	;x flip
+	mov r3,#25
+border_loop
+	strh r1,[r5],#0x2
+	mov r4,#30
+border_loop_2
+	strh r0,[r5],#0x2
+	subs r4,r4,#1
+	bne border_loop_2
+	strh r2,[r5],#0x02
+	add r1,r1,#1
+	add r2,r2,#1
+	subs r3,r3,#1
+	bne border_loop
+
+	ldmfd sp!,{r4-r5,lr}
+	bx lr
 ;----------------------------------------------------------------------------
 paletteinit;	r0-r3 modified.
 ;called by ui.c:  void map_palette(char gammavalue)
@@ -261,6 +302,43 @@ gammaconvert;	takes value in r0(0-0xFF), gamma in r1(0-4),returns new value in r
 	bx lr
 
 ;----------------------------------------------------------------------------
+scaleparms;
+	.word 0x0000,0x0138,0x0100,0x009C,0x0080,obj_buffer0+6
+;----------------------------------------------------------------------------
+SpriteScaleInit
+;----------------------------------------------------------------------------
+	stmfd sp!,{r4-r6}
+	adr r5,scaleparms		;set sprite scaling params
+	ldmia r5,{r0-r5}
+
+	mov r6,#2
+scaleloop
+	strh r1,[r5],#8				;buffer1, buffer2. normal sprites
+	strh r0,[r5],#8
+	strh r0,[r5],#8
+	strh r2,[r5],#8
+		strh r3,[r5],#8			;horizontaly expanded sprites
+		strh r0,[r5],#8
+		strh r0,[r5],#8
+		strh r2,[r5],#8
+			strh r1,[r5],#8			;verticaly expanded sprites
+			strh r0,[r5],#8
+			strh r0,[r5],#8
+			strh r4,[r5],#8
+				strh r3,[r5],#8		;double sprites
+				strh r0,[r5],#8
+				strh r0,[r5],#8
+				strh r4,[r5],#136
+		add r5,r5,#0x300
+	subs r6,r6,#1
+	bne scaleloop
+	ldmfd sp!,{r4-r6}
+	bx lr
+
+;----------------------------------------------------------------------------
+
+
+;----------------------------------------------------------------------------
 asm_vblank:
 ;----------------------------------------------------------------------------
 
@@ -274,20 +352,24 @@ asm_vblank:
 	eors r6,r6,#1
 	str r6,flicker_cnt
 
-	ldr r3,=scroll_buffer0
+	ldr r3,=scroll_ptr1
+	ldr r3,[r3]
 	ldr r4,=dma_buffer0
 	
 	ldr r1,=0x010B			; Y-delta
 	mov r5,#0
 	moveq r5,#0x000B
+;	mov r7,r5				; Y-Offset
 	mov r8,#0
 	moveq r8,#0x0040
-	mov r7,#0x0040			; X-delta
 	mov r2,#192
 loop0
 	ldrb r0,[r3,r5,lsr#8]
 	sub r0,r8,r0,lsl#8
 	str r0,[r4],#4
+;	str r5,[r4],#4
+;	mov r0,r0,asr#3
+;	str r0,[r4],#4
 	add r5,r5,r1
 	subs r2,r2,#1
 	bne loop0
@@ -297,7 +379,6 @@ loop0
 	ldr r2,=pal_buffer
 ;	ldr r3,=HW_DB_BG_PLTT
 	ldr r3,=HW_BG_PLTT
-	
 	mov r4,#512
 loop1
 	ldr r0,[r2],#4
@@ -307,10 +388,12 @@ loop1
 
 	mov r12,#HW_REG_BASE
 	tst r6,#1
-	mov r0,#0
-	moveq r0,#0x000B
+	mov r0,#0x0B00							;11 pixels offset.
+	addeq r0,r0,#0x000B
 	strh r0,[r12,#REG_BG2Y_OFFSET]
+	strh r0,[r12,#REG_BG3Y_OFFSET]
 	mov r0,#0x14000							;320<<8
+	addeq r0,r0,#0x00008
 	str r0,[r12,#REG_BG3X_OFFSET]
 
 	ldr r0,=bg2_ptr1
@@ -320,6 +403,7 @@ loop1
 	bic r1,r1,#0x800
 	orr r1,r1,r0,lsr#6
 	strh r1,[r12,#REG_BG2CNT_OFFSET]
+	strh r1,[r12,#REG_BG3CNT_OFFSET]
 
 	mov r0,#0
 	str r0,[r12,#REG_DMA2CNT_OFFSET]		;@ Stop DMA2
@@ -334,14 +418,15 @@ loop1
 
 	ldr r1,=dma_buffer0
 	add r2,r12,#REG_BG2X_OFFSET
-	ldr r3,=0x96600001
-	ldr r0,[r1],#4
+	ldr r3,=0x96600001						;@ 1 word(s)
+	ldr r0,[r1],#4							;change this if you change number of words transfered!
 	str r0,[r2]
 	str r1,[r12,#REG_DMA2SAD_OFFSET]
 	str r2,[r12,#REG_DMA2DAD_OFFSET]
 	str r3,[r12,#REG_DMA2CNT_OFFSET]		;@ DMA2 Go!
 
 
+;----------------- GUI screen -------------------
 	add r12,r12,#0x1000							;SUB gfx
 	ldr r0,=film_pos
 	ldr r0,[r0]
@@ -355,31 +440,71 @@ loop1
 ;----------------------------------------------------------------------------
 flicker_cnt
 	.word 0
+	.ltorg
 ;----------------------------------------------------------------------------
 VIC_R
 ;----------------------------------------------------------------------------
 	and r1,addy,#0x3F
-	cmp r1,#0x11
-	beq VIC_ctrl1_R
-	cmp r1,#0x12
-	beq VIC_scanline_R
-	cmp r1,#0x19
-	beq VIC_irqflag_R
 	cmp r1,#0x2F
-	bpl VIC_empty_R
-	b VIC_new_R
-;	ldr pc,[pc,r1,lsl#2]
+	ldrmi pc,[pc,r1,lsl#2]
 ;---------------------------
-;	DCD 0
+	b VIC_empty_R
 ;vic_read_tbl
-;	DCD VIC_empty_R	;0xD000
+	.word VIC_default_R		;0xD000
+	.word VIC_default_R		;0xD001
+	.word VIC_default_R		;0xD002
+	.word VIC_default_R		;0xD003
+	.word VIC_default_R		;0xD004
+	.word VIC_default_R		;0xD005
+	.word VIC_default_R		;0xD006
+	.word VIC_default_R		;0xD007
+	.word VIC_default_R		;0xD008
+	.word VIC_default_R		;0xD009
+	.word VIC_default_R		;0xD00A
+	.word VIC_default_R		;0xD00B
+	.word VIC_default_R		;0xD00C
+	.word VIC_default_R		;0xD00D
+	.word VIC_default_R		;0xD00E
+	.word VIC_default_R		;0xD00F
+	.word VIC_default_R		;0xD010
+	.word VIC_ctrl1_R		;0xD011
+	.word VIC_scanline_R	;0xD012
+	.word VIC_default_R		;0xD013
+	.word VIC_default_R		;0xD014
+	.word VIC_default_R		;0xD015
+	.word VIC_ctrl2_R		;0xD016
+	.word VIC_default_R		;0xD017
+	.word VIC_memctrl_R		;0xD018
+	.word VIC_irqflag_R		;0xD019
+	.word VIC_irqenable_R	;0xD01A
+	.word VIC_default_R		;0xD01B
+	.word VIC_default_R		;0xD01C
+	.word VIC_default_R		;0xD01D
+	.word VIC_default_R		;0xD01E
+	.word VIC_default_R		;0xD01F
+	.word VIC_palette_R		;0xD020
+	.word VIC_palette_R		;0xD021
+	.word VIC_palette_R		;0xD022
+	.word VIC_palette_R		;0xD023
+	.word VIC_palette_R		;0xD024
+	.word VIC_palette_R		;0xD025
+	.word VIC_palette_R		;0xD026
+	.word VIC_palette_R		;0xD027
+	.word VIC_palette_R		;0xD028
+	.word VIC_palette_R		;0xD029
+	.word VIC_palette_R		;0xD02A
+	.word VIC_palette_R		;0xD02B
+	.word VIC_palette_R		;0xD02C
+	.word VIC_palette_R		;0xD02D
+	.word VIC_palette_R		;0xD02E
 
-VIC_new_R
-;	mov r11,r11
+
+VIC_default_R
 	add r2,r10,#vic_base_offset
 	ldrb r0,[r2,r1]
 	bx lr
-	ldr r2,=VICState
+
+	ldr r2,=VICState			;This is needed for the compiler!
 
 ;----------------------------------------------------------------------------
 VIC_ctrl1_R;		0xD011
@@ -396,15 +521,41 @@ VIC_scanline_R;		0xD012
 	ldrb r0,[r10,#scanline]
 	bx lr
 ;----------------------------------------------------------------------------
+VIC_ctrl2_R;		0xD016
+;----------------------------------------------------------------------------
+	ldrb r0,[r10,#vicctrl2]
+	orr r0,r0,#0xC0
+	bx lr
+;----------------------------------------------------------------------------
+VIC_memctrl_R;		0xD018
+;----------------------------------------------------------------------------
+	ldrb r0,[r10,#vicmemctrl]
+	orr r0,r0,#0x01
+	bx lr
+;----------------------------------------------------------------------------
 VIC_irqflag_R;		0xD019
 ;----------------------------------------------------------------------------
 ;	mov r11,r11
 	ldrb r0,[r10,#vicirqflag]
 	ands r0,r0,#0x0F
 	orrne r0,r0,#0x80
+	orr r0,r0,#0x70
 	bx lr
 ;----------------------------------------------------------------------------
-VIC_empty_R;		0xD02F - 0xD03F
+VIC_irqenable_R;	0xD01A
+;----------------------------------------------------------------------------
+	ldrb r0,[r10,#vicirqenable]
+	orr r0,r0,#0xF0
+	bx lr
+;----------------------------------------------------------------------------
+VIC_palette_R;		0xD020 -> 0xD02E
+;----------------------------------------------------------------------------
+	add r2,r10,#vic_base_offset
+	ldrb r0,[r2,r1]
+	orr r0,r0,#0xF0
+	bx lr
+;----------------------------------------------------------------------------
+VIC_empty_R;		0xD02F -> 0xD03F
 ;----------------------------------------------------------------------------
 	mov r0,#0xFF
 	bx lr
@@ -413,76 +564,64 @@ VIC_empty_R;		0xD02F - 0xD03F
 VIC_W
 ;----------------------------------------------------------------------------
 	and r1,addy,#0x3F
-	cmp r1,#0x19
-	beq VIC_irqflag_W
-	cmp r1,#0x18
-	beq VIC_memctrl_W
-	cmp r1,#0x16
-	beq VIC_ctrl2_W
-	cmp r1,#0x11
-	beq VIC_ctrl1_W
 	cmp r1,#0x2F
-	bxpl lr
-
-	b VIC_empty_W
-;	ldr pc,[pc,r1,lsl#2]
+	ldrmi pc,[pc,r1,lsl#2]
 ;---------------------------
-;	DCD 0
+	bx lr
 ;vic_write_tbl
-;	DCD VIC_empty_W		;0xD000
-;	DCD VIC_empty_W		;0xD001
-;	DCD VIC_empty_W		;0xD002
-;	DCD VIC_empty_W		;0xD003
-;	DCD VIC_empty_W		;0xD004
-;	DCD VIC_empty_W		;0xD005
-;	DCD VIC_empty_W		;0xD006
-;	DCD VIC_empty_W		;0xD007
-;	DCD VIC_empty_W		;0xD008
-;	DCD VIC_empty_W		;0xD009
-;	DCD VIC_empty_W		;0xD00A
-;	DCD VIC_empty_W		;0xD00B
-;	DCD VIC_empty_W		;0xD00C
-;	DCD VIC_empty_W		;0xD00D
-;	DCD VIC_empty_W		;0xD00E
-;	DCD VIC_empty_W		;0xD00F
-;	DCD VIC_empty_W		;0xD010
-;	DCD VIC_ctrl1_W		;0xD011
-;	DCD VIC_empty_W		;0xD012
-;	DCD VIC_empty_W		;0xD013
-;	DCD VIC_empty_W		;0xD014
-;	DCD VIC_empty_W		;0xD015
-;	DCD VIC_ctrl2_W		;0xD016
-;	DCD VIC_empty_W		;0xD017
-;	DCD VIC_memctrl_W	;0xD018
-;	DCD VIC_irqflag_W	;0xD019
-;	DCD VIC_empty_W		;0xD01A
-;	DCD VIC_empty_W		;0xD01B
-;	DCD VIC_empty_W		;0xD01C
-;	DCD VIC_empty_W		;0xD01D
-;	DCD VIC_empty_W		;0xD01E
-;	DCD VIC_empty_W		;0xD01F
-;	DCD VIC_empty_W		;0xD020
-;	DCD VIC_empty_W		;0xD021
-;	DCD VIC_empty_W		;0xD022
-;	DCD VIC_empty_W		;0xD023
-;	DCD VIC_empty_W		;0xD024
-;	DCD VIC_empty_W		;0xD025
-;	DCD VIC_empty_W		;0xD026
-;	DCD VIC_empty_W		;0xD027
-;	DCD VIC_empty_W		;0xD028
-;	DCD VIC_empty_W		;0xD029
-;	DCD VIC_empty_W		;0xD02A
-;	DCD VIC_empty_W		;0xD02B
-;	DCD VIC_empty_W		;0xD02C
-;	DCD VIC_empty_W		;0xD02D
-;	DCD VIC_empty_W		;0xD02E
-;	DCD VIC_empty_W		;0xD02F
+	.word VIC_default_W		;0xD000
+	.word VIC_default_W		;0xD001
+	.word VIC_default_W		;0xD002
+	.word VIC_default_W		;0xD003
+	.word VIC_default_W		;0xD004
+	.word VIC_default_W		;0xD005
+	.word VIC_default_W		;0xD006
+	.word VIC_default_W		;0xD007
+	.word VIC_default_W		;0xD008
+	.word VIC_default_W		;0xD009
+	.word VIC_default_W		;0xD00A
+	.word VIC_default_W		;0xD00B
+	.word VIC_default_W		;0xD00C
+	.word VIC_default_W		;0xD00D
+	.word VIC_default_W		;0xD00E
+	.word VIC_default_W		;0xD00F
+	.word VIC_default_W		;0xD010
+	.word VIC_ctrl1_W			;0xD011
+	.word VIC_default_W		;0xD012
+	.word VIC_default_W		;0xD013
+	.word VIC_default_W		;0xD014
+	.word VIC_default_W		;0xD015
+	.word VIC_ctrl2_W			;0xD016
+	.word VIC_default_W		;0xD017
+	.word VIC_memctrl_W			;0xD018
+	.word VIC_irqflag_W			;0xD019
+	.word VIC_default_W		;0xD01A
+	.word VIC_default_W		;0xD01B
+	.word VIC_default_W		;0xD01C
+	.word VIC_default_W		;0xD01D
+	.word VIC_default_W		;0xD01E
+	.word VIC_default_W		;0xD01F
+	.word VIC_default_W		;0xD020
+	.word VIC_default_W		;0xD021
+	.word VIC_default_W		;0xD022
+	.word VIC_default_W		;0xD023
+	.word VIC_default_W		;0xD024
+	.word VIC_default_W		;0xD025
+	.word VIC_default_W		;0xD026
+	.word VIC_default_W		;0xD027
+	.word VIC_default_W		;0xD028
+	.word VIC_default_W		;0xD029
+	.word VIC_default_W		;0xD02A
+	.word VIC_default_W		;0xD02B
+	.word VIC_default_W		;0xD02C
+	.word VIC_default_W		;0xD02D
+	.word VIC_default_W		;0xD02E
 
-VIC_empty_W
+
+VIC_default_W
 ;	mov r11,r11
-;	ldr r2,=0x81C
-	add r2,r10,#vic_base_offset
 ;	ldr r2,=VICState
+	add r2,r10,#vic_base_offset
 	strb r0,[r2,r1]
 	bx lr
 
@@ -501,7 +640,7 @@ VIC_ctrl2_W;		0xD016
 	and r1,r1,#7
 
 	ldr addy,[r10,#scanline]			;addy=scanline
-	subs addy,addy,#51
+	subs addy,addy,#50
 	bmi exit_sx
 	cmp addy,#200
 	movhi addy,#200
@@ -510,7 +649,8 @@ VIC_ctrl2_W;		0xD016
 	bhi exit_sx
 	str addy,scrollXline
 
-	ldr r2,=scroll_buffer0
+	ldr r2,=scroll_ptr0
+	ldr r2,[r2]
 	add r0,r2,r0
 	add r2,r2,addy
 sx1
@@ -559,7 +699,8 @@ SetC64GfxBases
 	and r1,r0,#0x3C
 	cmp r1,#0x04				;0x1000
 	cmpne r1,#0x24				;0x9000
-	ldreq r2,=Chargen			;r1 = CHRROM
+;	ldreq r2,=Chargen			;r1 = CHRROM
+	ldreq r2,=_binary_chargen_rom			;r1 = CHRROM
 	movne r2,cpu_zpage			;r1 = RAM
 
 	bic r1,r0,#0x07
@@ -579,7 +720,6 @@ SetC64GfxMode
 ;----------------------------------------------------------------------------
 	stmfd sp!,{r0,r12}
 
-	mov r11,r11
 	ldrb r0,[r10,#vicctrl1]		;VIC control 1
 	ldrb r1,[r10,#vicctrl2]		;VIC control 2
 
@@ -614,16 +754,17 @@ RenderModeTbl
 ;----------------------------------------------------------------------------
 newframe	;called before line 0	(r0-r9 safe to use)
 ;----------------------------------------------------------------------------
-	mov r0,#0
+	mov r0,#-1				;Rambo checks for IRQ on line 0
 	str r0,[r10,#scanline]	;reset scanline count
 
 	ldr r0,[r10,#frame]
 	and r0,r0,#1
 	mov r0,r0,lsl#7
+	orr r0,r0,r0,lsl#8
+	orr r0,r0,r0,lsl#16
 	ldr r1,=obj_counter
 	str r0,[r1]
-
-; !! Add dublebuffering of background as well !!
+	str r0,[r1,#4]
 
 
 	ldr r1,=obj_buf_ptr0
@@ -637,6 +778,10 @@ spr_clr_loop
 
 	mov r0,#0
 	str r0,scrollXline
+	mov r0,#8
+	str r0,line_y_offset
+	mov r0,#-8
+	str r0,row_y_offset
 
 	bx lr
 
@@ -645,10 +790,6 @@ endframe	;called just before screen end (~line 240)	(r0-r2 safe to use)
 ;----------------------------------------------------------------------------
 	stmfd sp!,{r3-r9,lr}
 
-;	bl bg_finish
-;	bl bgchrfinish
-;--------------------------
-;	bl UpdateBGTiles
 ;--------------------------
 ;	bl sprDMA_do
 ;--------------------------
@@ -671,7 +812,7 @@ endframe	;called just before screen end (~line 240)	(r0-r2 safe to use)
 	str r0,[r2,#4]
 	str r1,[r2]
 
-	ldr r2,=scr_ptr0		;switch scroll buffers
+	ldr r2,=scroll_ptr0		;switch scroll buffers
 	ldmia r2,{r0,r1}
 	str r0,[r2,#4]
 	str r1,[r2]
@@ -696,6 +837,7 @@ PaletteTxAll		; Called from ui.c
 	ldrb r0,[r10,#vicbrdcol]
 	and r0,r7,r0,lsl#1
 	ldrh r0,[r2,r0]
+	strh r0,[r3,#0x1E]		;set sideborder color (plane1)
 	strh r0,[r3],#2
 
 	ldrb r4,[r10,#vicbgr1col]
@@ -716,22 +858,7 @@ c64loop1					;normal BG tile colors
 	cmp r1,#0x20
 	bne c64loop1
 
-	ldrb r0,[r10,#vicctrl1]		;check for multicolor/bitmap
-	tst r0,#0x20
-	ldrneb r0,[r10,#vicctrl2]
-	tstne r0,#0x10
-	beq PaletteTxEnd
 
-
-	sub r3,r3,#2
-	sub r3,r3,#0x1A0
-	mov r1,#30
-c64loop2
-	ldrh r0,[r2,r1]
-	strh r0,[r3,r1]
-	subs r1,r1,#2
-	bpl c64loop2
-PaletteTxEnd
 
 	ldr r3,=pal_buffer+0x202
 
@@ -765,14 +892,40 @@ RenderLine;			r0=?, r1=scanline.
 	stmfd sp!,{r1-r11,lr}
 	bl RenderSprites
 
-	subs r1,r1,#51
-	bmi exit_tile_render
-	cmp r1,#200
-	bpl exit_tile_render
+	subs r1,r1,#0x30			;this is where the VIC starts looking for background data.
+	bmi exit_line_render
+	cmp r1,#208
+	bpl exit_line_render
+;	cmp r1,#3
+;	blpl RenderBorder
+	bl RenderBorder
 
 	ldr r9,=bg2_ptr0
 	ldr r9,[r9]					;background base-address.
 	add r9,r9,r1,lsl#9			;y-offset
+
+	ldr r2,line_y_offset
+	ldr r3,row_y_offset
+	cmp r2,#8
+	bmi no_new_tile_row
+
+	ldrb r0,[r10,#vicctrl1]
+	sub r4,r1,r0
+	ands r4,r4,#7				;do we have a new tile row?
+;	bne no_new_tile_row
+	bne RenderBlankLine
+
+	mov r2,r4
+	add r3,r3,#8
+	str r3,row_y_offset
+	ldr r8,[sp,#7*4]
+	eatcycles 40
+	str r8,[sp,#7*4]
+no_new_tile_row
+	add r0,r2,#1
+	str r0,line_y_offset
+	add r1,r3,r2
+
 
 	bic r0,r1,#0x07
 	and r1,r1,#0x07
@@ -783,6 +936,19 @@ RenderLine;			r0=?, r1=scanline.
 RenderModePtr
 	.word RenderTiles
 
+exit_line_render
+;	cmp r1,#-1
+;	ldreqb r0,[r10,#vicctrl1]
+;	andeq r0,r0,#7
+;	rsbeq r0,r0,#3
+;	streq r0,main_y_offset
+
+	ldmfd sp!,{r1-r11,lr}
+	bx lr
+row_y_offset
+	.word 0
+line_y_offset
+	.word 0
 ;----------------------------------------------------------------------------
 RenderTiles
 ;----------------------------------------------------------------------------
@@ -800,6 +966,7 @@ RenderTiles
 	add r7,r7,r1
 
 	ldr r11,=0x03030303
+	mov lr,#0xFF
 	mov r8,#10					;width/4 of C64 screen
 bgrdloop
 	ldr r0,[r5],#4				;Read from C64 Tilemap RAM
@@ -808,7 +975,7 @@ bgrdloop
 
 	and r3,r0,#0x000000FF
 	ldrb r3,[r7,r3,lsl#3]		;read bitmap data
-	and r10,r1,#0x000000FF
+	and r10,lr,r1
 	add r3,r12,r3,lsl#3
 
 	ldmia r3,{r2,r3}
@@ -819,11 +986,10 @@ bgrdloop
 
 	and r3,r0,#0x0000FF00
 	ldrb r3,[r7,r3,lsr#5]		;read bitmap data
-	and r10,r1,#0x0000FF00
+	and r10,lr,r1,lsr#8
 	add r3,r12,r3,lsl#3
 
 	ldmia r3,{r2,r3}
-	mov r10,r10,lsr#8
 	mul r4,r2,r10
 	mul r10,r3,r10
 	stmia r9!,{r4,r10}
@@ -831,11 +997,10 @@ bgrdloop
 
 	and r3,r0,#0x00FF0000
 	ldrb r3,[r7,r3,lsr#13]		;read bitmap data
-	and r10,r1,#0x00FF0000
+	and r10,lr,r1,lsr#16
 	add r3,r12,r3,lsl#3
 
 	ldmia r3,{r2,r3}
-	mov r10,r10,lsr#16
 	mul r4,r2,r10
 	mul r10,r3,r10
 	stmia r9!,{r4,r10}
@@ -871,7 +1036,6 @@ bgrdloop
 	str r0,[r9],#4
 	str r0,[r9],#4
 
-exit_tile_render
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
 
@@ -890,7 +1054,8 @@ RenderTilesECM;					ExtendedColorMode
 	ldr r12,=chr_decode_3
 	add r7,r7,r1
 
-;	add r10,r9,#320
+	ldrb r0,[r10,#vicbgr0col]!
+	add lr,r9,#320
 
 	ldr r11,=0x03030303
 	mov r8,#10					;width/4 of C64 screen
@@ -906,8 +1071,8 @@ bgrdloop1
 
 	ldmia r3,{r2,r3}
 	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mul r4,r3,r4
+	stmia r9!,{r2,r4}
 
 
 	and r3,r0,#0x00003F00
@@ -918,8 +1083,8 @@ bgrdloop1
 	ldmia r3,{r2,r3}
 	mov r4,r4,lsr#8
 	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mul r4,r3,r4
+	stmia r9!,{r2,r4}
 
 
 	and r3,r0,#0x003F0000
@@ -930,8 +1095,8 @@ bgrdloop1
 	ldmia r3,{r2,r3}
 	mov r4,r4,lsr#16
 	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mul r4,r3,r4
+	stmia r9!,{r2,r4}
 
 
 	and r3,r0,#0x3F000000
@@ -940,29 +1105,29 @@ bgrdloop1
 	add r3,r12,r3,lsl#3
 
 	ldmia r3,{r2,r3}
-	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mul r1,r2,r4
+	mul r4,r3,r4
+	stmia r9!,{r1,r4}
+
+
+	and r2,r0,#0x000000C0		;background color.
+	ldrb r3,[r10,r2,lsr#6]
+	and r2,r0,#0x0000C000
+	ldrb r2,[r10,r2,lsr#14]
+	orr r3,r3,r2,lsl#8
+	and r2,r0,#0x00C00000
+	ldrb r2,[r10,r2,lsr#22]
+	orr r3,r3,r2,lsl#16
+	and r2,r0,#0xC0000000
+	ldrb r2,[r10,r2,lsr#30]
+	orr r3,r3,r2,lsl#24
+	orr r3,r11,r3,lsl#4
+	bic r3,r3,r11,lsl#2
+	str r3,[lr],#4
+
 
 	subs r8,r8,#1
 	bne bgrdloop1
-
-	ldr globalptr,=wram_global_base
-	ldrb r0,[r10,#vicbgr0col]	;background color
-	and r0,r0,#0x0F
-	orr r0,r11,r0,lsl#4
-	orr r0,r0,r0,lsl#8
-	orr r0,r0,r0,lsl#16
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
 
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
@@ -978,99 +1143,49 @@ RenderTilesMCM;					MultiColorMode
 
 	ldr r0,=c64_chr_base
 	ldr r7,[r0]					;bg tile bitmap
-	ldr r12,=chr_decode_3
-	ldr lr,=chr_decode_4
+	ldr lr,=chr_decode_3		;mono
 	add r7,r7,r1
 
-	ldr r11,=0x03030303
-	mov r8,#10					;width/4 of C64 screen
+	ldr r11,=0x03030300
+	ldrb r0,[r10,#vicbgr1col]
+	and r0,r0,#0x0F
+	orr r11,r11,r0,lsl#12
+	ldrb r0,[r10,#vicbgr2col]
+	and r0,r0,#0x0F
+	orr r11,r11,r0,lsl#20
+
+	mov r12,#0x18
+	mov r10,#0xFF
+	mov r8,#40					;width of C64 screen
 bgrdloop2
-	ldr r0,[r5],#4				;Read from C64 Tilemap RAM
-	ldr r1,[r6],#4				;Read from C64 Colormap RAM
-	orr r1,r11,r1,lsl#4
+	ldrb r0,[r5],#1				;Read from C64 Tilemap RAM
+	ldrb r1,[r6],#1				;Read from C64 Color RAM (color 3)
+	
+	bic r11,r11,#0xF0000000
+	orrs r11,r11,r1,lsl#28
+	bic r11,r11,#0x80000000				;clear multi color bit
+	ldrb r0,[r7,r0,lsl#3]				;read bitmap data
 
-	and r3,r0,#0x000000FF
-	ldrb r3,[r7,r3,lsl#3]		;read bitmap data
-	movs r4,r1,lsl#25
-	addcc r3,r12,r3,lsl#3
-	addcs r3,lr,r3,lsl#3
+	andmi r1,r12,r0,lsr#3
+	andmi r3,r10,r11,lsr r1
+	andmi r1,r12,r0,lsr#1
+	andmi r1,r10,r11,lsr r1
+	orrmi r3,r3,r1,lsl#16
+	andmi r1,r12,r0,lsl#1
+	andmi r4,r10,r11,lsr r1
+	andmi r1,r12,r0,lsl#3
+	andmi r1,r10,r11,lsr r1
+	orrmi r4,r4,r1,lsl#16
+	orrmi r3,r3,r3,lsl#8
+	orrmi r4,r4,r4,lsl#8
 
-	ldmia r3,{r2,r3}
-	mov r4,r4,lsr#25
+	addpl r0,lr,r0,lsl#3
+	ldmplia r0,{r1,r2}
+	movpl r4,r11,lsr#24
+	mulpl r3,r1,r4
+	mulpl r4,r2,r4
 
-	andcs r10,r2,r2,lsr#1
-	mulcs r10,r4,r10
-	orrcs r2,r2,r10
-	andcs r10,r3,r3,lsr#1
-	mulcs r10,r4,r10
-	orrcs r3,r3,r10
-
-	mulcc r2,r4,r2
-	mulcc r3,r4,r3
-	stmia r9!,{r2,r3}
-
-
-	and r3,r0,#0x0000FF00
-	ldrb r3,[r7,r3,lsr#5]		;read bitmap data
-	movs r4,r1,lsl#17
-	addcc r3,r12,r3,lsl#3
-	addcs r3,lr,r3,lsl#3
-
-	ldmia r3,{r2,r3}
-	mov r4,r4,lsr#25
-
-	andcs r10,r2,r2,lsr#1
-	mulcs r10,r4,r10
-	orrcs r2,r2,r10
-	andcs r10,r3,r3,lsr#1
-	mulcs r10,r4,r10
-	orrcs r3,r3,r10
-
-	mulcc r2,r4,r2
-	mulcc r3,r4,r3
-	stmia r9!,{r2,r3}
-
-
-	and r3,r0,#0x00FF0000
-	ldrb r3,[r7,r3,lsr#13]		;read bitmap data
-	movs r4,r1,lsl#9
-	addcc r3,r12,r3,lsl#3
-	addcs r3,lr,r3,lsl#3
-
-	ldmia r3,{r2,r3}
-	mov r4,r4,lsr#25
-
-	andcs r10,r2,r2,lsr#1
-	mulcs r10,r4,r10
-	orrcs r2,r2,r10
-	andcs r10,r3,r3,lsr#1
-	mulcs r10,r4,r10
-	orrcs r3,r3,r10
-
-	mulcc r2,r4,r2
-	mulcc r3,r4,r3
-	stmia r9!,{r2,r3}
-
-
-	and r3,r0,#0xFF000000
-	ldrb r3,[r7,r3,lsr#21]		;read bitmap data
-	movs r4,r1,lsl#1
-	addcc r3,r12,r3,lsl#3
-	addcs r3,lr,r3,lsl#3
-
-	ldmia r3,{r2,r3}
-	mov r4,r4,lsr#25
-
-	andcs r10,r2,r2,lsr#1
-	mulcs r10,r4,r10
-	orrcs r2,r2,r10
-	andcs r10,r3,r3,lsr#1
-	mulcs r10,r4,r10
-	orrcs r3,r3,r10
-
-	mulcc r2,r4,r2
-	mulcc r3,r4,r3
-	stmia r9!,{r2,r3}
+	stmia r9!,{r3,r4}
 
 	subs r8,r8,#1
 	bne bgrdloop2
@@ -1078,7 +1193,8 @@ bgrdloop2
 	ldr globalptr,=wram_global_base
 	ldrb r0,[r10,#vicbgr0col]	;background color
 	and r0,r0,#0x0F
-	orr r0,r11,r0,lsl#4
+	orr r0,r0,#0x30000000
+	mov r0,r0,ror#28
 	orr r0,r0,r0,lsl#8
 	orr r0,r0,r0,lsl#16
 	str r0,[r9],#4
@@ -1092,7 +1208,6 @@ bgrdloop2
 	str r0,[r9],#4
 	str r0,[r9],#4
 
-exit_tilemcm_render
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
 ;----------------------------------------------------------------------------
@@ -1109,7 +1224,6 @@ RenderBmp
 	add r6,r6,r1
 
 	add r10,r9,#320
-	mov r11,r11
 
 	ldr r7,=0x0F0F0F0F
 	ldr r11,=0x03030303
@@ -1167,7 +1281,6 @@ bgrdloop4
 	subs r8,r8,#1
 	bne bgrdloop4
 
-exit_bmp_render
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
 ;----------------------------------------------------------------------------
@@ -1240,7 +1353,6 @@ bgrdloop5
 	str r0,[r9],#4
 	str r0,[r9],#4
 
-exit_bmpcmc_render
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
 ;----------------------------------------------------------------------------
@@ -1259,26 +1371,42 @@ blankloop
 	subs r1,r1,#1
 	bne blankloop
 
-exit_blank_render
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
 ;----------------------------------------------------------------------------
+RenderBorder;
+;----------------------------------------------------------------------------
+;	stmfd sp!,{r1-r2}
+	ldr r2,=tile_base
+	ldr r2,[r2]
+	add r2,r2,#0x840			;tile 66
+	ldrb r0,[r10,#vicctrl2]
+	ands r0,r0,#0x08
+	moveq r0,#0x00FFFFFF
+	movne r0,#0x00000000
+	str r0,[r2,r1,lsl#2]
 
+;	ldmfd sp!,{r1-r2}
+	bx lr
 
+#define PRIORITY 0x0400
 ;----------------------------------------------------------------------------
 RenderSprites;			r0=?, r1=scanline.
 ;----------------------------------------------------------------------------
 	stmfd sp!,{r1,lr}
 
+;	sub r1,r1,#1				;"tp8 results" breaks with this, fixes StarPaws.
+	and r1,r1,#0xFF
 	add r3,r10,#vic_base_offset
 	ldr r7,=obj_buf_ptr0
 	ldr r7,[r7]
-	ldr r0,=obj_counter
-	ldr r0,[r0]
-	and r0,r0,#0x7f
-	add r7,r7,r0,lsl#3
+;	ldr r0,=obj_counter
+;	ldr r0,[r0]
+;	and r0,r0,#0x7f
+;	add r7,r7,r0,lsl#3
 
 	ldrb r9,[r10,#vicsprenable]
+
 
 	mov r8,#0
 spr_loop
@@ -1289,43 +1417,66 @@ spr_loop
 	tst r9,r4,lsl r8
 	beq next_spr
 
-	ldr r6,=0x1ff
 	mov r2,r0,lsr#8			;y-pos
 	ldr r5,=0xF5C2
 	mul r2,r5,r2
 	mov r2,r2,lsr#16
-	sub r2,r2,#48			;(50)
-	and r2,r2,#0xff
-
 
 	and r0,r0,#0xFF			;x-pos
 	ldrb r5,[r10,#vicsprxpos]
 	tst r5,r4,lsl r8
 	orrne r0,r0,#0x100
+
+	mov r6,#0x00000100		;Use scaling
+	orr r6,r6,#0x80000000	;32x32 size
+
+	ldrb r5,[r10,#vicsprprio]
+	tst r5,r4,lsl r8
+	orrne r6,r6,#0x00000400
+
+	ldrb r5,[r10,#vicsprexpx]
+	tst r5,r4,lsl r8
+	orrne r6,r6,#0x02000000
+	ldrb r5,[r10,#vicsprexpy]
+	tst r5,r4,lsl r8
+	orrne r6,r6,#0x04000000
+	tst r6,#0x06000000		;expand X or Y?
+	beq noexpand
+	orrne r6,r6,#0x00000200	;Use double size
+	tst r6,#0x02000000
+	subeq r0,r0,#20
+	tst r6,#0x04000000
+	subeq r2,r2,#16
+noexpand
+	sub r2,r2,#48			;(50) fix up Y-pos
+	and r2,r2,#0xff
+	orr r2,r2,r6
+
 	ldr r5,=0xCCCC
 	mul r0,r5,r0
-
-;	sub r0,r0,#0x18			;fix up X
-	sub r0,r0,#0x140000
+;	sub r0,r0,#0x18			;fix up X-pos
+	sub r0,r0,#0x150000		;was 0x140000 (now +3)
+	tst r6,#0x02000000		;x expand?
+	subne r0,r0,#0x030000	;another +3 for X expanded.
+	ldr r6,=0x1ff
 	and r0,r6,r0,lsr#16
 
-
-	orr r0,r0,#0x8000		;32x32 size
-	orr r0,r2,r0,lsl#16
-	str r0,[r7],#4			;store OBJ Atr 0,1. Xpos, ypos, xflip, scale/rot, size, shape.
+	orr r6,r2,r0,lsl#16
 
 	bl VRAM_spr				;jump to spr copy
 ret01
 	ldr r4,=obj_counter
-	ldr r2,[r4]
+	ldrb r2,[r4,r8]
+	add r5,r2,#1
+	strb r5,[r4,r8]
+	add r2,r2,r8,lsl#4
 	mov r0,r2,lsl#2			;tile nr.
+	and r2,r2,#0x7F
+	add r5,r7,r2,lsl#3
 	orr r0,r0,r8,lsl#12		;color
-;	orr r0,r0,#PRIORITY		;priority
-	strh r0,[r7],#4			;store OBJ Atr 2. Pattern, palette.
-	add r2,r2,#1
-;	cmp r2,#0x100
-;	movpl r2,#0
-	str r2,[r4]
+	orr r0,r0,#PRIORITY		;priority
+	str r6,[r5],#4			;store OBJ Atr 0,1. Xpos, ypos, xflip, scale/rot, size, shape.
+	strh r0,[r5]			;store OBJ Atr 2. Pattern, palette.
 
 next_spr
 
@@ -1345,7 +1496,8 @@ VRAM_spr
 	ldr r5,=obj_base
 	ldr r5,[r5]
 	ldr r0,=obj_counter
-	ldr r0,[r0]
+	ldrb r0,[r0,r8]
+	add r0,r0,r8,lsl#4
 	add r5,r5,r0,lsl#9
 
 	ldr r0,=c64_map_base
@@ -1359,7 +1511,6 @@ VRAM_spr
 	add r12,cpu_zpage,r2,lsl#14
 	add r12,r12,r0,lsl#6
 
-	mov r11,r11
 	ldrb r0,[r10,#vicsprmode]
 	tst r0,r4,lsl r8
 	beq VRAM_spr_mono
@@ -1442,7 +1593,7 @@ obj_buffer0
 obj_buffer1
  .space 128*8
 dma_buffer0
- .space 192*4
+ .space 192*4*2
 scroll_buffer0
  .space 256
 scroll_buffer1
@@ -1454,16 +1605,16 @@ bg2_ptr0
  .word 0
 bg2_ptr1
  .word 0
-scr_ptr0
+scroll_ptr0
  .word 0
-scr_ptr1
+scroll_ptr1
  .word 0
 obj_buf_ptr0
  .word 0
 obj_buf_ptr1
  .word 0
 obj_counter
- .word 0
+ .word 0,0
 
 c64_map_base
  .word 0
