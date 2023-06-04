@@ -22,10 +22,10 @@ Machine_reset:
 
 	ldr globalptr,=wram_global_base
 	ldr r0,=emu_ram_base
-	ldr cpu_zpage,[r0]
-	add cpu_zpage,cpu_zpage,#0x1FC
-	bic cpu_zpage,cpu_zpage,#0x1FC
-	str cpu_zpage,[r0]
+	ldr m6502zpage,[r0]
+	add m6502zpage,m6502zpage,#0x1FC
+	bic m6502zpage,m6502zpage,#0x1FC
+	str m6502zpage,[r0]
 
 	bl Mem_reset
 	bl GFX_reset
@@ -42,7 +42,7 @@ Machine_run:
 
 	ldr globalptr,=wram_global_base
 	ldr r0,=emu_ram_base
-	ldr cpu_zpage,[r0]
+	ldr m6502zpage,[r0]
 
 	bl ManageInput
 	mov r0,#0
@@ -65,7 +65,7 @@ Mem_reset:
 
 tbloop1:
 	and r1,r0,r2
-	add r1,cpu_zpage,r1,lsl#13
+	add r1,m6502zpage,r1,lsl#13
 	str r1,[r4,r0,lsl#2]
 	str r7,[r5,r0,lsl#2]
 	str r8,[r6,r0,lsl#2]
@@ -76,7 +76,7 @@ tbloop1:
 
 	ldr r7,=chargen_R
 	mov r0,#0x0C			;@ Chargen
-	add r1,cpu_zpage,#0xC000
+	add r1,m6502zpage,#0xC000
 //	ldr r1,=Chargen
 	str r1,[r4,r0,lsl#2]
 	str r7,[r5,r0,lsl#2]	;@ RdMem
@@ -101,7 +101,7 @@ tbloop1:
 	ldr r7,=IO_R
 	ldr r8,=IO_W
 	mov r0,#0x0E			;@ IO
-	add r1,cpu_zpage,#0xC000
+	add r1,m6502zpage,#0xC000
 	str r1,[r4,r0,lsl#2]
 	str r7,[r5,r0,lsl#2]	;@ RdMem
 	str r8,[r6,r0,lsl#2]	;@ WrMem
@@ -118,14 +118,14 @@ HuDataLoop:
 	movs r5,r5,lsr#1
 	bne HuDataLoop
 
-	mov r0,cpu_zpage		;@ Clear RAM
+	mov r0,m6502zpage		;@ Clear RAM
 	mov r1,#0
 	mov r2,#0x10000/4
 	bl memset_
 	mov r0,#0x2F
-	strb r0,[cpu_zpage]
+	strb r0,[m6502zpage]
 	mov r0,#0x37
-	strb r0,[cpu_zpage,#1]
+	strb r0,[m6502zpage,#1]
 
 	ldmfd sp!,{lr}
 	bx lr
@@ -175,8 +175,8 @@ flush:		;@ Update cpu_pc & lastbank
 ;@----------------------------------------------------------------------------
 BankSwitch_R:
 ;@----------------------------------------------------------------------------
-	ldrb r1,[cpu_zpage]		;@ Dir
-	ldrb r0,[cpu_zpage,#1]	;@ Data
+	ldrb r1,[m6502zpage]		;@ Dir
+	ldrb r0,[m6502zpage,#1]	;@ Data
 	ldr r2,data_out
 	orr r2,r2,#0x17
 
@@ -190,31 +190,31 @@ BankSwitch_R:
 ;@----------------------------------------------------------------------------
 BankSwitch_0_W:
 ;@----------------------------------------------------------------------------
-	ldrb r1,[cpu_zpage]		;@ Dir
+	ldrb r1,[m6502zpage]		;@ Dir
 	cmp r0,r1
 	bxeq lr
-	strb r0,[cpu_zpage]
+	strb r0,[m6502zpage]
 	b setPort
 ;@----------------------------------------------------------------------------
 BankSwitch_1_W:
 ;@----------------------------------------------------------------------------
-	ldrb r1,[cpu_zpage,#1]	;@ Data
+	ldrb r1,[m6502zpage,#1]	;@ Data
 	cmp r0,r1
 	bxeq lr
-	strb r0,[cpu_zpage,#1]
+	strb r0,[m6502zpage,#1]
 
 setPort:
 	stmfd sp!,{r0,r3,lr}
 
-	ldrb r1,[cpu_zpage]
-	ldrb r0,[cpu_zpage,#1]
+	ldrb r1,[m6502zpage]
+	ldrb r0,[m6502zpage,#1]
 	ldr r3,data_out
 	bic r3,r3,r1
 	and r0,r0,r1
 	orr r3,r3,r0
 	str r3,data_out
 
-	ldrb r0,[cpu_zpage,#1]
+	ldrb r0,[m6502zpage,#1]
 	eor r1,r1,#7
 	orr r3,r0,r1
 

@@ -1,7 +1,7 @@
-	.include "equates.h"
+#include "equates.h"
 
-
-	.global run_frame
+	.global run
+	.global stepFrame
 	.global irq_scanlinehook
 	.global frametotal
 	.global sleeptime
@@ -9,7 +9,7 @@
 
 	.text machine_cpu
 ;@----------------------------------------------------------------------------
-run_frame:	;@ r0=0 to return after frame
+run:		;@ r0=0 to return after frame
 ;@----------------------------------------------------------------------------
 //	mov r1,#0
 //	strb r1,novblankwait
@@ -20,8 +20,13 @@ run_frame:	;@ r0=0 to return after frame
 
 	ldr globalptr,=wram_global_base
 	ldr r0,=emu_ram_base
-	ldr cpu_zpage,[r0]
+	ldr m6502zpage,[r0]
 	b line0x
+
+;@----------------------------------------------------------------------------
+stepFrame:
+;@----------------------------------------------------------------------------
+	bx lr
 ;@----------------------------------------------------------------------------
 ;@ Cycles ran out
 ;@----------------------------------------------------------------------------

@@ -1,15 +1,1 @@
-	.extern empty_IO_R
-	.extern empty_R
-	.extern empty_W
-	.extern ram_R
-	.extern ram_low_R
-	.extern ram_W
-	.extern ram_low_W
-	.extern chargen_R
-	.extern basic_R
-	.extern kernal_R
-	.extern rom_R0
-	.extern rom_W
-	.extern bytecopy_
-	.extern memset_
-	.extern memorr_
+

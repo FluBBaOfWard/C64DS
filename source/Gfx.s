@@ -1,6 +1,6 @@
-	.include "equates.h"
-	.include "memory.h"
-	.include "6510mac.h"
+#include "equates.h"
+#include "memory.h"
+#include "6510mac.h"
 
 	.global asm_vblank
 	.global gfxInit
@@ -12,10 +12,6 @@
 	.global endframe
 	.global RenderLine
 	.global SetC64GfxBases
-
-	.include "nitro/hw/ARM9/ioreg_MI.h"
-	.include "nitro/hw/ARM9/ioreg_G2.h"
-	.include "nitro/hw/ARM9/mmap_global.h"
 
 	.text gfx_routines
 ;@----------------------------------------------------------------------------
@@ -673,7 +669,7 @@ SetC64GfxBases:
 	ldrb r2,[r10,#vicmemctrl]
 	and r1,r2,#0xF0
 	orr r1,r1,r0,lsl#8
-	add r1,cpu_zpage,r1,lsl#6
+	add r1,m6502zpage,r1,lsl#6
 
 	ldr r12,=c64_map_base
 	str r1,[r12]
@@ -686,7 +682,7 @@ SetC64GfxBases:
 	cmpne r1,#0x24				;@ 0x9000
 //	ldreq r2,=Chargen			;@ r1 = CHRROM
 	ldreq r2,=_binary_chargen_rom			;@ r1 = CHRROM
-	movne r2,cpu_zpage			;@ r1 = RAM
+	movne r2,m6502zpage			;@ r1 = RAM
 
 	bic r1,r0,#0x07
 	add r1,r2,r1,lsl#10
@@ -941,7 +937,7 @@ RenderTiles
 //	mov r11,r11
 	ldr r2,=c64_map_base
 	ldr r5,[r2]
-	sub r6,cpu_zpage,#0x400		;@ Bg colormap
+	sub r6,m6502zpage,#0x400		;@ Bg colormap
 	add r5,r5,r0
 	add r6,r6,r0
 
@@ -1030,7 +1026,7 @@ RenderTilesECM:					;@ ExtendedColorMode
 
 	ldr r2,=c64_map_base
 	ldr r5,[r2]
-	sub r6,cpu_zpage,#0x400		;@ Bg colormap
+	sub r6,m6502zpage,#0x400		;@ Bg colormap
 	add r5,r5,r0
 	add r6,r6,r0
 
@@ -1121,7 +1117,7 @@ RenderTilesMCM:					;@ MultiColorMode
 
 	ldr r2,=c64_map_base
 	ldr r5,[r2]
-	sub r6,cpu_zpage,#0x400		;@ Bg colormap
+	sub r6,m6502zpage,#0x400		;@ Bg colormap
 	add r5,r5,r0
 	add r6,r6,r0
 
@@ -1273,7 +1269,7 @@ RenderBmpMCM:					;@ MultiColorMode
 
 	ldr r2,=c64_map_base
 	ldr r4,[r2]
-	sub r5,cpu_zpage,#0x400		;@ Bg colormap
+	sub r5,m6502zpage,#0x400		;@ Bg colormap
 	add r4,r4,r0
 	add r5,r5,r0
 
@@ -1492,7 +1488,7 @@ VRAM_spr
 	ldrb r2,[r10,#cia2porta]		;@ VIC bank
 	eor r2,r2,#0x03
 	and r2,r2,#0x03
-	add r12,cpu_zpage,r2,lsl#14
+	add r12,m6502zpage,r2,lsl#14
 	add r12,r12,r0,lsl#6
 
 	ldrb r0,[r10,#vicsprmode]

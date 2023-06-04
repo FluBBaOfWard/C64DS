@@ -1,6 +1,6 @@
-	#include "equates.h"
-	#include "6510.h"
-	#include "memory.h"
+#include "equates.h"
+#include "ARM6502/M6502.h"
+#include "memory.h"
 
 	.global SID_reset
 	.global frequency_reset

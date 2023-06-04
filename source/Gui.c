@@ -5,15 +5,12 @@
 #include "Shared/EmuSettings.h"
 #include "Main.h"
 #include "FileHandling.h"
-#include "WonderSwan.h"
-#include "Cart.h"
+//#include "Cart.h"
 #include "Gfx.h"
-#include "io.h"
+//#include "io.h"
 #include "cpu.h"
-#include "ARMV30MZ/Version.h"
-#include "Sphinx/Version.h"
 
-#define EMUVERSION "V0.5.2 2023-04-19"
+#define EMUVERSION "V0.1.0 2023-05-04"
 
 #define ALLOW_SPEED_HACKS	(1<<17)
 #define ENABLE_HEADPHONES	(1<<18)
@@ -36,7 +33,7 @@ static void updateGameInfo(void);
 const fptr fnMain[] = {nullUI, subUI, subUI, subUI, subUI, subUI, subUI, subUI, subUI, subUI};
 
 const fptr fnList0[] = {uiDummy};
-const fptr fnList1[] = {selectGame, loadState, saveState, loadNVRAM, saveNVRAM, saveSettings, ejectGame, resetGame, ui9};
+const fptr fnList1[] = {selectGame, loadState, saveState, loadNVRAM, saveNVRAM, saveSettings, resetGame, ui9};
 const fptr fnList2[] = {ui4, ui5, ui6, ui7, ui8};
 const fptr fnList3[] = {uiDummy};
 const fptr fnList4[] = {autoBSet, autoASet, controllerSet, swapABSet};
@@ -78,7 +75,7 @@ void setupGUI() {
 
 /// This is called when going from emu to ui.
 void enterGUI() {
-	if (updateSettingsFromWS() && (emuSettings & AUTOSAVE_SETTINGS)) {
+	if (emuSettings & AUTOSAVE_SETTINGS) {
 		saveSettings();
 		settingsChanged = false;
 	}
@@ -106,7 +103,6 @@ void uiFile() {
 	drawMenuItem("Load NVRAM");
 	drawMenuItem("Save NVRAM");
 	drawMenuItem("Save Settings");
-	drawMenuItem("Eject Game");
 	drawMenuItem("Reset Console");
 	if (enableExit) {
 		drawMenuItem("Quit Emulator");
@@ -134,8 +130,8 @@ void uiAbout() {
 	drawMenuText(gameInfoString, 9, 0);
 
 	drawMenuText("NitroSwan    " EMUVERSION, 21, 0);
-	drawMenuText("Sphinx       " SPHINXVERSION, 22, 0);
-	drawMenuText("ARMV30MZ     " ARMV30MZVERSION, 23, 0);
+//	drawMenuText("Sphinx       " SPHINXVERSION, 22, 0);
+//	drawMenuText("ARMV30MZ     " ARMV30MZVERSION, 23, 0);
 }
 
 void uiController() {
@@ -200,10 +196,6 @@ void nullUIDebug(int key) {
 	if (key & KEY_TOUCH) {
 		openMenu();
 	}
-}
-
-void ejectGame() {
-	ejectCart();
 }
 
 void resetGame() {
