@@ -1,34 +1,23 @@
-	.include equates.h
-	.include memory.h
-	.include 6510mac.h
-	.include 6510.h
-
-	.extern emu_ram_base
-	.extern wram_global_base
-	.extern GFX_reset
-	.extern IO_reset
-	.extern IO_R
-	.extern IO_W
-	.extern ManageInput
-	.extern _binary_basic_rom
-	.extern _binary_kernal_rom
+#include "equates.h"
+#include "memory.h"
+#include "ARM6502/M6502mac.h"
+#include "ARM6502/M6502.h"
 
 	.global Machine_reset
 	.global Machine_run
 	.global BankSwitch_R
 	.global BankSwitch_0_W
 	.global BankSwitch_1_W
-;	.global Chargen
-;	.global Basic
-;	.global Kernal
-;	.global Keyboard_gfx
+//	.global Chargen
+//	.global Basic
+//	.global Kernal
+//	.global Keyboard_gfx
 
 
 	.text machine
-    
-;-------------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
 Machine_reset:
-;-------------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
 	ldr globalptr,=wram_global_base
@@ -41,14 +30,14 @@ Machine_reset:
 	bl Mem_reset
 	bl GFX_reset
 	bl IO_reset
-;	bl SOUND_reset
+//	bl SOUND_reset
 	bl CPU_reset
 
 	ldmfd sp!,{r4-r11,lr}
 	bx lr
-;-------------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
 Machine_run:
-;-------------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
 	ldr globalptr,=wram_global_base
@@ -61,9 +50,9 @@ Machine_run:
 
 	ldmfd sp!,{r4-r11,lr}
 	bx lr
-;-------------------------------------------------------------------------------
-Mem_reset
-;-------------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+Mem_reset:
+;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 	mov r2,#0xFF
 
@@ -74,7 +63,7 @@ Mem_reset
 	ldr r8,=ram_W
 	mov r0,#0
 
-tbloop1
+tbloop1:
 	and r1,r0,r2
 	add r1,cpu_zpage,r1,lsl#13
 	str r1,[r4,r0,lsl#2]
@@ -86,51 +75,51 @@ tbloop1
 
 
 	ldr r7,=chargen_R
-	mov r0,#0x0C			;Chargen
+	mov r0,#0x0C			;@ Chargen
 	add r1,cpu_zpage,#0xC000
-;	ldr r1,=Chargen
+//	ldr r1,=Chargen
 	str r1,[r4,r0,lsl#2]
-	str r7,[r5,r0,lsl#2]	;RdMem
-	str r8,[r6,r0,lsl#2]	;WrMem
+	str r7,[r5,r0,lsl#2]	;@ RdMem
+	str r8,[r6,r0,lsl#2]	;@ WrMem
 
 	ldr r7,=basic_R
-	mov r0,#0x0D			;Basic
+	mov r0,#0x0D			;@ Basic
 	ldr r1,=_binary_basic_rom
-;	ldr r1,=Basic
+//	ldr r1,=Basic
 	str r1,[r4,r0,lsl#2]
-	str r7,[r5,r0,lsl#2]	;RdMem
-	str r8,[r6,r0,lsl#2]	;WrMem
+	str r7,[r5,r0,lsl#2]	;@ RdMem
+	str r8,[r6,r0,lsl#2]	;@ WrMem
 
 	ldr r7,=kernal_R
-	mov r0,#0x0F			;Kernal
+	mov r0,#0x0F			;@ Kernal
 	ldr r1,=_binary_kernal_rom
-;	ldr r1,=Kernal
+//	ldr r1,=Kernal
 	str r1,[r4,r0,lsl#2]
-	str r7,[r5,r0,lsl#2]	;RdMem
-	str r8,[r6,r0,lsl#2]	;WrMem
+	str r7,[r5,r0,lsl#2]	;@ RdMem
+	str r8,[r6,r0,lsl#2]	;@ WrMem
 
 	ldr r7,=IO_R
 	ldr r8,=IO_W
-	mov r0,#0x0E			;IO
+	mov r0,#0x0E			;@ IO
 	add r1,cpu_zpage,#0xC000
 	str r1,[r4,r0,lsl#2]
-	str r7,[r5,r0,lsl#2]	;RdMem
-	str r8,[r6,r0,lsl#2]	;WrMem
+	str r7,[r5,r0,lsl#2]	;@ RdMem
+	str r8,[r6,r0,lsl#2]	;@ WrMem
 
-;	mov m6502_pc,#0		;(eliminates any encodePC errors during mapper*init)
-;	str m6502_pc,lastbank
+//	mov m6502_pc,#0		;@ (eliminates any encodePC errors during mapper*init)
+//	str m6502_pc,lastbank
 
 	adr r4,HuMapData
 	mov r5,#0x80
-HuDataLoop
+HuDataLoop:
 	mov r0,r5
 	ldrb r1,[r4],#1
 	bl HuMapper_
 	movs r5,r5,lsr#1
 	bne HuDataLoop
 
-	mov r0,cpu_zpage		;clear RAM
-	mov r1,#0		
+	mov r0,cpu_zpage		;@ Clear RAM
+	mov r1,#0
 	mov r2,#0x10000/4
 	bl memset_
 	mov r0,#0x2F
@@ -140,81 +129,81 @@ HuDataLoop
 
 	ldmfd sp!,{lr}
 	bx lr
-;-------------------------------------------------------------------------------
-HuMapData
-	.byte 0x0F,0x0E,0x0D,0x04,0x03,0x02,0x01,0x00			;C64 Kernal/IO/Basic mapped in.
-;-------------------------------------------------------------------------------
-WRMEMTBL_	.space 16*4
-RDMEMTBL_	.space 16*4
-MEMMAPTBL_	.space 16*4
-;-------------------------------------------------------------------------------
-;-------------------------------------------------------------------------------
-HuMapper_	;rom paging..
-;-------------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+HuMapData:
+	.byte 0x0F,0x0E,0x0D,0x04,0x03,0x02,0x01,0x00	;@ C64 Kernal/IO/Basic mapped in.
+;@----------------------------------------------------------------------------
+WRMEMTBL_:	.space 16*4
+RDMEMTBL_:	.space 16*4
+MEMMAPTBL_:	.space 16*4
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+HuMapper_:	;@ Rom paging..
+;@----------------------------------------------------------------------------
 	stmfd sp!,{r3-r7}
 	ldr r6,=MEMMAPTBL_
 	ldr r2,[r6,r1,lsl#2]!
-	ldr r3,[r6,#-64]		;RDMEMTBL_
-	ldr r4,[r6,#-128]		;WRMEMTBL_
+	ldr r3,[r6,#-64]		;@ RDMEMTBL_
+	ldr r4,[r6,#-128]		;@ WRMEMTBL_
 
-wr_tbl
+wr_tbl:
 	add r6,r10,#readmem_tbl
 	tst r0,#0xFF
-	bne memaps				;safety
+	bne memaps				;@ Safety
 	b flush
-memapl
+memapl:
 	add r6,r6,#4
-memap2
+memap2:
 	sub r2,r2,#0x2000
-memaps
+memaps:
 	movs r0,r0,lsr#1
-	bcc memapl				;C=0
-	strcs r3,[r6],#4		;readmem_tbl
-	strcs r4,[r6,#28]		;writemem_tb
-	strcs r2,[r6,#60]		;memmap_tbl
+	bcc memapl				;@ C=0
+	strcs r3,[r6],#4		;@ readmem_tbl
+	strcs r4,[r6,#28]		;@ writemem_tb
+	strcs r2,[r6,#60]		;@ memmap_tbl
 	bne memap2
 
-;------------------------------------------
-flush		;update cpu_pc & lastbank
-;------------------------------------------
+;@------------------------------------------
+flush:		;@ Update cpu_pc & lastbank
+;@------------------------------------------
 	ldr r1,[r10,#lastbank]
 	sub m6502_pc,m6502_pc,r1
 	encodePC
 
 	ldmfd sp!,{r3-r7}
 	mov pc,lr
-;----------------------------------------------------------------------------
-BankSwitch_R
-;----------------------------------------------------------------------------
-	ldrb r1,[cpu_zpage]		;dir
-	ldrb r0,[cpu_zpage,#1]	;data
+;@----------------------------------------------------------------------------
+BankSwitch_R:
+;@----------------------------------------------------------------------------
+	ldrb r1,[cpu_zpage]		;@ Dir
+	ldrb r0,[cpu_zpage,#1]	;@ Data
 	ldr r2,data_out
 	orr r2,r2,#0x17
 
 	tst r1,#0x20
 	eor r1,r1,#0xFF
-	orr r0,r0,r1			;cleared bits are input (=1)
+	orr r0,r0,r1			;@ Cleared bits are input (=1)
 	and r0,r0,r2
 	biceq r0,r0,#0x20
 	bx lr
 
-;----------------------------------------------------------------------------
-BankSwitch_0_W
-;----------------------------------------------------------------------------
-	ldrb r1,[cpu_zpage]		;dir
+;@----------------------------------------------------------------------------
+BankSwitch_0_W:
+;@----------------------------------------------------------------------------
+	ldrb r1,[cpu_zpage]		;@ Dir
 	cmp r0,r1
 	bxeq lr
 	strb r0,[cpu_zpage]
 	b setPort
-;----------------------------------------------------------------------------
-BankSwitch_1_W
-;----------------------------------------------------------------------------
-	ldrb r1,[cpu_zpage,#1]	;data
+;@----------------------------------------------------------------------------
+BankSwitch_1_W:
+;@----------------------------------------------------------------------------
+	ldrb r1,[cpu_zpage,#1]	;@ Data
 	cmp r0,r1
 	bxeq lr
 	strb r0,[cpu_zpage,#1]
 
-setPort
+setPort:
 	stmfd sp!,{r0,r3,lr}
 
 	ldrb r1,[cpu_zpage]
@@ -231,48 +220,45 @@ setPort
 
 
 	tst r3,#0x02
-	moveq r1,#0x07		;ram
-	movne r1,#0x0F		;kernal rom
-	mov r0,#0x80		;bank 0xE000.
+	moveq r1,#0x07		;@ Ram
+	movne r1,#0x0F		;@ Kernal rom
+	mov r0,#0x80		;@ Bank 0xE000.
 	bl HuMapper_
 
 	and r0,r3,#0x03
 	cmp r0,#0x03
-	movne r1,#0x05		;ram
-	moveq r1,#0x0D		;basic rom
-	mov r0,#0x20		;bank 0xA000.
+	movne r1,#0x05		;@ Ram
+	moveq r1,#0x0D		;@ Basic rom
+	mov r0,#0x20		;@ Bank 0xA000.
 	bl HuMapper_
 
 	tst r3,#0x04
-	moveq r1,#0x0C		;chargen/ram
-	movne r1,#0x0E		;IO
-	tst r3,#0x03		;special!?
-	moveq r1,#0x06		;ram
-	mov r0,#0x40		;bank 0xC000.
+	moveq r1,#0x0C		;@ Chargen/ram
+	movne r1,#0x0E		;@ IO
+	tst r3,#0x03		;@ Special!?
+	moveq r1,#0x06		;@ Ram
+	mov r0,#0x40		;@ Bank 0xC000.
 	bl HuMapper_
 
-;	ldr r0,[r10,#lastbank]
-;	sub m6502_pc,m6502_pc,r0
-;	encodePC
+//	ldr r0,[r10,#lastbank]
+//	sub m6502_pc,m6502_pc,r0
+//	encodePC
 
 	ldmfd sp!,{r0,r3,pc}
-;-------------------------------------------------------------------------------
-data_out
+;@----------------------------------------------------------------------------
+data_out:
 	.word	0x3f
 
 
 
-;-------------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
 	.bss
-;Chargen
-;	.space 0x1000
-;Basic
-;	.space 0x2000
-;Kernal
-;	.space 0x2000
-;Keyboard_gfx			;space for loading gfx
-;	.space 0x1000
-
-
-
+//Chargen:
+//	.space 0x1000
+//Basic:
+//	.space 0x2000
+//Kernal:
+//	.space 0x2000
+//Keyboard_gfx:			;@ Space for loading gfx
+///	.space 0x1000
 

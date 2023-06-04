@@ -1,0 +1,255 @@
+#include <nds.h>
+#include <maxmod9.h>
+
+#include "Main.h"
+#include "Shared/EmuMenu.h"
+#include "Shared/FileHelper.h"
+#include "Shared/AsmExtra.h"
+#include "Gui.h"
+
+#include "gfx.h"
+#include "sound.h"
+#include "gui.h"
+#include "cia_tod.h"
+
+//#define sample_rate 32768
+#define sample_rate 55930
+#define buffer_size (512+10)
+
+extern void Machine_reset(void);
+extern void Machine_run(void);
+extern u32 mytouch_x;
+extern u32 mytouch_y;
+extern u32 mytouch_press;
+
+//==========================================================================
+
+unsigned char *emu_ram_alloc;
+unsigned char *emu_ram_base;
+
+//==========================================================================
+
+void emulate(void);
+void vhandler(void);
+
+static void checkTimeOut(void);
+static void setupGraphics(void);
+static void setupStream(void);
+
+static int sleepTimer = 60*60*5;	// 5min
+static bool vBlankOverflow = false;
+
+static mm_ds_system sys;
+static mm_stream myStream;
+
+uint16 *map0sub;
+uint16 *map1sub;
+
+static const u8 guiPalette[] = {
+	0x00,0x00,0xC0, 0x00,0x00,0x00, 0x81,0x81,0x81, 0x93,0x93,0x93, 0xA5,0xA5,0xA5, 0xB7,0xB7,0xB7, 0xC9,0xC9,0xC9, 0xDB,0xDB,0xDB,
+	0xED,0xED,0xED, 0xFF,0xFF,0xFF, 0x00,0x00,0xC0, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00,
+	0x00,0x00,0x00, 0x00,0x00,0x00, 0x50,0x78,0x78, 0x60,0x90,0x90, 0x78,0xB0,0xB0, 0x88,0xC8,0xC8, 0x90,0xE0,0xE0, 0xA0,0xF0,0xF0,
+	0xB8,0xF8,0xF8, 0xEF,0xFF,0xFF, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00,
+	0x00,0x00,0x00, 0x00,0x00,0x00, 0x21,0x21,0x21, 0x33,0x33,0x33, 0x45,0x45,0x45, 0x47,0x47,0x47, 0x59,0x59,0x59, 0x6B,0x6B,0x6B,
+	0x7D,0x7D,0x7D, 0x8F,0x8F,0x8F, 0x20,0x20,0xE0, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00,
+	0x00,0x00,0x00, 0x00,0x00,0x00, 0x81,0x81,0x81, 0x93,0x93,0x93, 0xA5,0xA5,0xA5, 0xB7,0xB7,0xB7, 0xC9,0xC9,0xC9, 0xDB,0xDB,0xDB,
+	0xED,0xED,0xED, 0xFF,0xFF,0xFF, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00,
+	0x00,0x00,0x00, 0x00,0x00,0x00, 0x70,0x70,0x20, 0x88,0x88,0x40, 0xA0,0xA0,0x60, 0xB8,0xB8,0x80, 0xD0,0xD0,0x90, 0xE8,0xE8,0xA0,
+	0xF7,0xF7,0xC0, 0xFF,0xFF,0xE0, 0x00,0x00,0x60, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00
+	};
+
+//---------------------------------------------------------------------------------
+void myVblank(void) {
+//---------------------------------------------------------------------------------
+	vBlankOverflow = true;
+//	DC_FlushRange(EMUPALBUFF, 0x400);
+	vblIrqHandler();
+	CIA_TOD_Count();
+}
+
+
+//---------------------------------------------------------------------------------
+int main(int argc, char **argv) {
+//---------------------------------------------------------------------------------
+
+	// allocate some RAM to sub & main bg
+	GX_SetBankForBG(GX_VRAM_BG_256_BD);
+	GX_SetBankForOBJ(GX_VRAM_OBJ_128_A);
+
+	// set sub & main background mode
+	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_2D);
+	GXS_SetGraphicsMode(GX_BGMODE_0);
+	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);
+
+
+	// setup main bg1
+	G2_SetBG1Control(GX_BG_SCRSIZE_TEXT_256x256, GX_BG_COLORMODE_16, GX_BG_SCRBASE_0x0000, GX_BG_CHARBASE_0x00000, GX_BG_EXTPLTT_01);
+	G2_SetBG1Priority(0);
+	// setup main bg2
+	G2_SetBG2Control256Bmp(GX_BG_SCRSIZE_256BMP_512x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+	G2_SetBG2Priority(1);
+	// setup main bg3
+	G2_SetBG3Control256Bmp(GX_BG_SCRSIZE_256BMP_512x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+	G2_SetBG3Priority(1);
+	//	bg1,bg2,bg3 & obj is visible
+	GX_SetVisiblePlane(GX_PLANEMASK_BG1 | GX_PLANEMASK_BG2 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
+	tile_base = G2_GetBG2ScrPtr();
+	
+	obj_base = G2_GetOBJCharPtr();
+
+	// allocate C64 ram from the heap
+	emu_ram_alloc = OS_AllocFromHeap(OS_ARENA_MAIN, handle, 0x30600);
+	emu_ram_base = emu_ram_alloc + 0x400;
+
+	//Clear DS VRAM and calculate LUTs.
+	GFX_init();
+
+
+	CIA_TOD_Init();
+
+}
+
+
+//---------------------------------------------------------------------------------
+void pausVBlank(int count) {
+//---------------------------------------------------------------------------------
+	while (--count)
+		waitVBlank();
+}
+
+//---------------------------------------------------------------------------------
+void waitVBlank() {
+//---------------------------------------------------------------------------------
+	// Workaround for bug in Bios.
+	if (!vBlankOverflow) {
+		swiIntrWait(1, IRQ_VBLANK);
+	}
+	vBlankOverflow = false;
+}
+
+//---------------------------------------------------------------------------------
+static void checkTimeOut() {
+//---------------------------------------------------------------------------------
+	if (EMUinput) {
+		sleepTimer = sleepTime;
+	} else {
+		sleepTimer--;
+		if (sleepTimer < 0) {
+			sleepTimer = sleepTime;
+			// systemSleep doesn't work as expected.
+			//systemSleep();
+		}
+	}
+}
+
+//---------------------------------------------------------------------------------
+void setEmuSpeed(int speed) {
+//---------------------------------------------------------------------------------
+	if (speed == 0) {			// Normal Speed
+		waitMaskIn = 0x00;
+		waitMaskOut = 0x00;
+	} else if (speed == 1) {	// Double speed
+		waitMaskIn = 0x00;
+		waitMaskOut = 0x01;
+	} else if (speed == 2) {	// Max speed (4x)
+		waitMaskIn = 0x00;
+		waitMaskOut = 0x03;
+	} else if (speed == 3) {	// 50% speed
+		waitMaskIn = 0x01;
+		waitMaskOut = 0x00;
+	}
+}
+
+//---------------------------------------------------------------------------------
+static void setupGraphics() {
+//---------------------------------------------------------------------------------
+
+	vramSetBankA(VRAM_A_MAIN_BG);
+	vramSetBankB(VRAM_B_MAIN_BG_0x06020000);
+//	vramSetBankC(VRAM_C_MAIN_BG_0x06040000);
+	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
+//	vramSetBankD(VRAM_D_MAIN_BG_0x06060000);
+	vramSetBankE(VRAM_E_MAIN_SPRITE);
+	vramSetBankF(VRAM_F_LCD);
+	vramSetBankG(VRAM_G_LCD);
+	vramSetBankH(VRAM_H_LCD);
+	vramSetBankI(VRAM_I_SUB_SPRITE);
+
+	// Set up the main display
+	videoSetMode(MODE_3_2D
+				 | DISPLAY_BG0_ACTIVE
+				 | DISPLAY_BG1_ACTIVE
+				 | DISPLAY_BG2_ACTIVE
+				 | DISPLAY_BG3_ACTIVE
+				 | DISPLAY_BG_EXT_PALETTE
+				 );
+	REG_BG0CNT = BG_32x32 | BG_MAP_BASE(1) | BG_COLOR_16 | BG_TILE_BASE(4) | BG_PRIORITY(0);
+	REG_BG1CNT = BG_64x32 | BG_MAP_BASE(0) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(2);
+	REG_BG2CNT = BG_64x64 | BG_MAP_BASE(2) | BG_COLOR_16 | BG_TILE_BASE(6) | BG_PRIORITY(0);
+	REG_BG3CNT = BG_RS_64x64 | BG_MAP_BASE(6) | BG_COLOR_16 | BG_TILE_BASE(8) | BG_PRIORITY(1) | BG_WRAP_ON;
+
+	// Set up the sub display
+	videoSetModeSub(MODE_3_2D
+					| DISPLAY_BG0_ACTIVE
+					| DISPLAY_BG1_ACTIVE
+					| DISPLAY_BG2_ACTIVE
+					| DISPLAY_BG3_ACTIVE
+					| DISPLAY_BG_EXT_PALETTE
+					);
+	REG_BG0CNT_SUB = BG_32x32 | BG_MAP_BASE(0) | BG_COLOR_16 | BG_TILE_BASE(1) | BG_PRIORITY(0);
+	REG_BG1CNT_SUB = BG_32x32 | BG_MAP_BASE(1) | BG_COLOR_16 | BG_TILE_BASE(1) | BG_PRIORITY(0);
+	REG_BG2CNT_SUB = BG_32x32 | BG_MAP_BASE(2) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(2);
+	REG_BG3CNT_SUB = BG_RS_64x64 | BG_MAP_BASE(4) | BG_COLOR_16 | BG_TILE_BASE(4) | BG_PRIORITY(1) | BG_WRAP_ON;
+	REG_BG1HOFS_SUB = 0;
+	REG_BG1VOFS_SUB = 0;
+	map0sub = BG_MAP_RAM_SUB(0);
+	map1sub = BG_MAP_RAM_SUB(1);
+
+	decompress(EmuFontTiles, BG_GFX_SUB+0x3200, LZ77Vram);
+	setupMenuPalette();
+}
+
+void setupMenuPalette() {
+	convertPalette(EMUPALBUFF+0x200, guiPalette, sizeof(guiPalette)/3, gGammaValue);
+}
+
+//---------------------------------------------------------------------------------
+static void setupStream(void) {
+//---------------------------------------------------------------------------------
+
+	//----------------------------------------------------------------
+	// initialize maxmod without any soundbank (unusual setup)
+	//----------------------------------------------------------------
+//	mm_ds_system sys;
+	sys.mod_count 			= 0;
+	sys.samp_count			= 0;
+	sys.mem_bank			= 0;
+	sys.fifo_channel		= FIFO_MAXMOD;
+	mmInit( &sys );
+
+	//----------------------------------------------------------------
+	// open stream
+	//----------------------------------------------------------------
+//	mm_stream myStream;
+	myStream.sampling_rate	= sample_rate;				// sampling rate =
+	myStream.buffer_length	= buffer_size;				// buffer length =
+//	myStream.callback		= mix_sound;				// set callback function
+	myStream.callback		= VblSound2;				// set callback function
+	myStream.format			= MM_STREAM_16BIT_STEREO;	// format = stereo 16-bit
+	myStream.timer			= MM_TIMER0;				// use hardware timer 0
+	myStream.manual			= false;					// use manual filling
+	mmStreamOpen( &myStream );
+
+	//----------------------------------------------------------------
+	// when using 'automatic' filling, your callback will be triggered
+	// every time half of the wave buffer is processed.
+	//
+	// so:
+	// 25000 (rate)
+	// ----- = ~21 Hz for a full pass, and ~42hz for half pass
+	// 1200  (length)
+	//----------------------------------------------------------------
+	// with 'manual' filling, you must call mmStreamUpdate
+	// periodically (and often enough to avoid buffer underruns)
+	//----------------------------------------------------------------
+}

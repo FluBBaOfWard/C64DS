@@ -1,16 +1,3 @@
-	.extern CIA1_TOD_F_R
-	.extern CIA1_TOD_S_R
-	.extern CIA1_TOD_M_R
-	.extern CIA1_TOD_H_R
-	.extern CIA1_TOD_F_W
-	.extern CIA1_TOD_S_W
-	.extern CIA1_TOD_M_W
-	.extern CIA1_TOD_H_W
-	.extern CIA2_TOD_F_R
-	.extern CIA2_TOD_S_R
-	.extern CIA2_TOD_M_R
-	.extern CIA2_TOD_H_R
-	.extern CIA2_TOD_F_W
-	.extern CIA2_TOD_S_W
-	.extern CIA2_TOD_M_W
-	.extern CIA2_TOD_H_W
+
+void CIA_TOD_Init(void);
+void CIA_TOD_Count(void);
