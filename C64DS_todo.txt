@@ -1,0 +1,34 @@
+C64 Todo
+
+	Fix better sound?
+
+GFX:
+	See VIC todo.
+
+GUI:
+	Eng/Jap.
+
+Mem:
+
+CPU:
+	See ARM6502 Todo.
+
+Sound:
+	See SID todo.
+
+Misc:
+	Time Bokan Series, slow.
+
+Games Not Working:
+
+Games Not Working Fixed:
+	Xi Little. Can't start. Waiting on sample playing. Fixed.
+
+Games With Glitches:
+	Mahjong Touryuumon, speed too fast.
+
+Games With Glitches Fixed:
+	Cardcaptor Sakura, book dissolve in intro glitches the second time.
+
+Speedhacks:
+	* Robot Works

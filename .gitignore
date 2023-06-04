@@ -1,0 +1,6 @@
+C64DS.xcodeproj/xcuserdata
+C64DS.xcodeproj/project.xcworkspace/xcuserdata
+build
+*.elf
+*.nds
+*.zip
