@@ -57,6 +57,14 @@
 		9CA442182A2CFB6200259966 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		9CA442192A2CFB6300259966 /* C64DS_todo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = C64DS_todo.txt; sourceTree = "<group>"; };
 		9CA4421A2A2CFB6300259966 /* History.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = History.txt; sourceTree = "<group>"; };
+		9CA442202A2D00DA00259966 /* Version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Version.h; sourceTree = "<group>"; };
+		9CA442212A2D00DA00259966 /* ARM6502_todo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ARM6502_todo.txt; sourceTree = "<group>"; };
+		9CA442222A2D00DA00259966 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		9CA442232A2D00DA00259966 /* M6502.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = M6502.s; sourceTree = "<group>"; };
+		9CA442242A2D00DA00259966 /* M6502.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M6502.h; sourceTree = "<group>"; };
+		9CA442252A2D00DA00259966 /* M6502.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = M6502.i; sourceTree = "<group>"; };
+		9CA442262A2D00DA00259966 /* History.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = History.txt; sourceTree = "<group>"; };
+		9CA442272A2D00DA00259966 /* M6502mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M6502mac.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -85,6 +93,7 @@
 		9CA441DF2A2CFB3600259966 /* source */ = {
 			isa = PBXGroup;
 			children = (
+				9CA4421F2A2D00DA00259966 /* ARM6502 */,
 				9CA441EA2A2CFB3600259966 /* Shared */,
 				9CA442142A2CFB3600259966 /* equates.h */,
 				9CA441E22A2CFB3600259966 /* filemanager.h */,
@@ -164,6 +173,21 @@
 				9CA442172A2CFB4F00259966 /* C64Keyboard.png */,
 			);
 			path = graphics;
+			sourceTree = "<group>";
+		};
+		9CA4421F2A2D00DA00259966 /* ARM6502 */ = {
+			isa = PBXGroup;
+			children = (
+				9CA442222A2D00DA00259966 /* README.md */,
+				9CA442212A2D00DA00259966 /* ARM6502_todo.txt */,
+				9CA442262A2D00DA00259966 /* History.txt */,
+				9CA442202A2D00DA00259966 /* Version.h */,
+				9CA442242A2D00DA00259966 /* M6502.h */,
+				9CA442272A2D00DA00259966 /* M6502mac.h */,
+				9CA442252A2D00DA00259966 /* M6502.i */,
+				9CA442232A2D00DA00259966 /* M6502.s */,
+			);
+			path = ARM6502;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

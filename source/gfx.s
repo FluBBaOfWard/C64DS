@@ -1,7 +1,8 @@
 	.include "equates.h"
 	.include "memory.h"
 
-	.extern Chargen
+;	.extern Chargen
+	.extern _binary_chargen_rom
 	.extern tile_base
 	.extern obj_base
 	.extern wram_global_base
@@ -27,7 +28,7 @@
 ;----------------------------------------------------------------------------
 GFX_init	;(called from main.c) only need to call once
 ;----------------------------------------------------------------------------
-	stmfd sp!,{r4-r6,lr}
+	stmfd sp!,{lr}
 
 	mov r0,#NTR_VRAM
 	mov r1,#0
@@ -49,12 +50,12 @@ GFX_init	;(called from main.c) only need to call once
 	add r1,r1,#128*8
 	str r1,[r0]
 
-	ldr r0,=tile_base
-	ldr r0,[r0]
-	ldr r1,=bg2_ptr0
-	str r0,[r1],#4
-	add r0,r0,#0x20000
-	str r0,[r1]
+	ldr r1,=tile_base
+	ldr r1,[r1]
+	ldr r0,=bg2_ptr0
+	str r1,[r0],#4
+	add r1,r1,#0x20000
+	str r1,[r0]
 
 	mov r2,#0xffffff00		;build bg tile decode tbl
 	ldr r3,=chr_decode
@@ -142,44 +143,28 @@ ppi4
 	adds r2,r2,#1
 	bne ppi4
 
-	ldr r5,=0xffff0000		;build bg tile decode tbl
-	ldr r6,=chr_decode_new
-ppi5
-	mov r0,#0
-	and r1,r5,#0xF000
-	orr r1,r1,#0x0300
-	and r2,r5,#0x0F00
-	orr r2,r2,#0x0030
-	and r3,r5,#0x00F0
-	orr r3,r3,#0x0003
+;	mov r2,#0xffffff00		;build bg tile decode tbl
+;	ldr r3,=chr_decode_new
+;ppi5
+;	mov r0,#0
+;	mov r1,#0
+;	and r12,r2,#0x00000030
+;	orr r0,r0,r12,lsl#20
+;	orr r0,r0,r12,lsl#12
+;	and r12,r2,#0x000000C0
+;	orr r0,r0,r12,lsl#2
+;	orr r0,r0,r12,lsr#6
+;	and r12,r2,#0x00000003
+;	orr r1,r1,r12,lsl#24
+;	orr r1,r1,r12,lsl#16
+;	and r12,r2,#0x0000000C
+;	orr r1,r1,r12,lsl#6
+;	orr r1,r1,r12,lsr#2
+;	stmia r3!,{r0-r1}
+;	adds r2,r2,#1
+;	bne ppi5
 
-	and r12,r5,#0x00000003
-	cmp r12,#0x3
-	orreq r0,r0,r3,lsl#24
-	orreq r0,r0,r3,lsl#16
-	cmp r12,#0x2
-	orreq r0,r0,r2,lsl#20
-	orreq r0,r0,r2,lsl#12
-	cmp r12,#0x1
-	orreq r0,r0,r1,lsl#16
-	orreq r0,r0,r1,lsl#8
-
-	and r12,r5,#0x0000000C
-	cmp r12,#0xC
-	orreq r0,r0,r3,lsl#8
-	orreq r0,r0,r3
-	cmp r12,#0x8
-	orreq r0,r0,r2,lsl#4
-	orreq r0,r0,r2,lsr#4
-	cmp r12,#0x4
-	orreq r0,r0,r1
-	orreq r0,r0,r1,lsr#8
-
-	str r0,[r6],#4
-	adds r5,r5,#1
-	bne ppi5
-
-	ldmfd sp!,{r4-r6,lr}
+	ldmfd sp!,{lr}
 	bx lr
 ;----------------------------------------------------------------------------
 GFX_reset	;called with CPU reset
@@ -222,31 +207,6 @@ GFX_reset	;called with CPU reset
 ;	bl InitBGTiles
 	bl paletteinit	;do palette mapping
 	ldr pc,[sp],#4
-;----------------------------------------------------------------------------
-;InitBGTiles
-;----------------------------------------------------------------------------
-;	stmfd sp!,{lr}
-;	ldr r2,=chr_decode
-
-;dobgtiles
-;	ldr r1,=Chargen				;r1 = c64 font
-;	ldr r3,=tile_base			;r3 = NTR BG tileset
-;	ldr r3,[r3]
-;	ldr r3,=0x06004000
-
-;	mov r12,#0x4000
-;bgchr1
-;	ldrb r0,[r1],#1				;read bitplane
-;	ldr r0,[r2,r0,lsl#2]
-;	orr r0,r0,r0,lsl#1
-;	str r0,[r3],#4
-
-;	subs r12,r12,#4
-;	bne bgchr1
-
-;	ldmfd sp!,{lr}
-;	bx lr
-
 ;----------------------------------------------------------------------------
 paletteinit;	r0-r3 modified.
 ;called by ui.c:  void map_palette(char gammavalue)
@@ -458,7 +418,9 @@ VIC_W
 	cmp r1,#0x18
 	beq VIC_memctrl_W
 	cmp r1,#0x16
-	beq VIC_vicctrl2_W
+	beq VIC_ctrl2_W
+	cmp r1,#0x11
+	beq VIC_ctrl1_W
 	cmp r1,#0x2F
 	bxpl lr
 
@@ -466,8 +428,55 @@ VIC_W
 ;	ldr pc,[pc,r1,lsl#2]
 ;---------------------------
 ;	DCD 0
-;vic_read_tbl
-;	DCD VIC_empty_R	;0xD000
+;vic_write_tbl
+;	DCD VIC_empty_W		;0xD000
+;	DCD VIC_empty_W		;0xD001
+;	DCD VIC_empty_W		;0xD002
+;	DCD VIC_empty_W		;0xD003
+;	DCD VIC_empty_W		;0xD004
+;	DCD VIC_empty_W		;0xD005
+;	DCD VIC_empty_W		;0xD006
+;	DCD VIC_empty_W		;0xD007
+;	DCD VIC_empty_W		;0xD008
+;	DCD VIC_empty_W		;0xD009
+;	DCD VIC_empty_W		;0xD00A
+;	DCD VIC_empty_W		;0xD00B
+;	DCD VIC_empty_W		;0xD00C
+;	DCD VIC_empty_W		;0xD00D
+;	DCD VIC_empty_W		;0xD00E
+;	DCD VIC_empty_W		;0xD00F
+;	DCD VIC_empty_W		;0xD010
+;	DCD VIC_ctrl1_W		;0xD011
+;	DCD VIC_empty_W		;0xD012
+;	DCD VIC_empty_W		;0xD013
+;	DCD VIC_empty_W		;0xD014
+;	DCD VIC_empty_W		;0xD015
+;	DCD VIC_ctrl2_W		;0xD016
+;	DCD VIC_empty_W		;0xD017
+;	DCD VIC_memctrl_W	;0xD018
+;	DCD VIC_irqflag_W	;0xD019
+;	DCD VIC_empty_W		;0xD01A
+;	DCD VIC_empty_W		;0xD01B
+;	DCD VIC_empty_W		;0xD01C
+;	DCD VIC_empty_W		;0xD01D
+;	DCD VIC_empty_W		;0xD01E
+;	DCD VIC_empty_W		;0xD01F
+;	DCD VIC_empty_W		;0xD020
+;	DCD VIC_empty_W		;0xD021
+;	DCD VIC_empty_W		;0xD022
+;	DCD VIC_empty_W		;0xD023
+;	DCD VIC_empty_W		;0xD024
+;	DCD VIC_empty_W		;0xD025
+;	DCD VIC_empty_W		;0xD026
+;	DCD VIC_empty_W		;0xD027
+;	DCD VIC_empty_W		;0xD028
+;	DCD VIC_empty_W		;0xD029
+;	DCD VIC_empty_W		;0xD02A
+;	DCD VIC_empty_W		;0xD02B
+;	DCD VIC_empty_W		;0xD02C
+;	DCD VIC_empty_W		;0xD02D
+;	DCD VIC_empty_W		;0xD02E
+;	DCD VIC_empty_W		;0xD02F
 
 VIC_empty_W
 ;	mov r11,r11
@@ -479,7 +488,12 @@ VIC_empty_W
 
 
 ;----------------------------------------------------------------------------
-VIC_vicctrl2_W;		0xD016
+VIC_ctrl1_W;		0xD011
+;----------------------------------------------------------------------------
+	strb r0,[r10,#vicctrl1]
+	b SetC64GfxMode
+;----------------------------------------------------------------------------
+VIC_ctrl2_W;		0xD016
 ;----------------------------------------------------------------------------
 	stmfd sp!,{r0,r12}
 	ldrb r1,[r10,#vicctrl2]
@@ -505,7 +519,8 @@ sx1
 	bpl sx1
 exit_sx
 	ldmfd sp!,{r0,r12}
-	bx lr
+	b SetC64GfxMode
+;	bx lr
 
 scrollXline .word 0 ;..was when?
 ;----------------------------------------------------------------------------
@@ -560,6 +575,43 @@ SetC64GfxBases
 	ldmfd sp!,{r0,r12}
 	bx lr
 ;----------------------------------------------------------------------------
+SetC64GfxMode
+;----------------------------------------------------------------------------
+	stmfd sp!,{r0,r12}
+
+	mov r11,r11
+	ldrb r0,[r10,#vicctrl1]		;VIC control 1
+	ldrb r1,[r10,#vicctrl2]		;VIC control 2
+
+	mov r0,r0,lsr#4
+	and r0,r0,#0x07
+	and r1,r1,#0x10
+	orr r0,r0,r1,lsr#1
+	adr r1,RenderModeTbl
+	ldr r1,[r1,r0,lsl#2]
+	str r1,RenderModePtr
+
+	ldmfd sp!,{r0,r12}
+	bx lr
+
+RenderModeTbl
+	.word RenderBlankLine
+	.word RenderTiles			;1
+	.word RenderBlankLine
+	.word RenderBmp				;3
+	.word RenderBlankLine
+	.word RenderTilesECM		;5
+	.word RenderBlankLine
+	.word RenderBlankLine		;7
+	.word RenderBlankLine
+	.word RenderTilesMCM		;9
+	.word RenderBlankLine
+	.word RenderBmpMCM			;11
+	.word RenderBlankLine
+	.word RenderBlankLine
+	.word RenderBlankLine
+	.word RenderBlankLine
+;----------------------------------------------------------------------------
 newframe	;called before line 0	(r0-r9 safe to use)
 ;----------------------------------------------------------------------------
 	mov r0,#0
@@ -603,7 +655,7 @@ endframe	;called just before screen end (~line 240)	(r0-r2 safe to use)
 	bl PaletteTxAll
 ;--------------------------
 	ldrb r0,[r10,#vicctrl2]
-	bl VIC_vicctrl2_W
+	bl VIC_ctrl2_W
 
 ;	mrs r4,cpsr
 ;	orr r1,r4,#0x80			;--> Disable IRQ.
@@ -726,20 +778,14 @@ RenderLine;			r0=?, r1=scanline.
 	and r1,r1,#0x07
 	add r0,r0,r0,lsl#2
 
-	ldrb r2,[r10,#vicctrl1]
-	tst r2,#0x10
-	beq RenderBlankLine
-	tst r2,#0x20
-	bne RenderBmp
+	ldr pc,RenderModePtr
 
-	tst r2,#0x40
-	bne RenderTilesECM
+RenderModePtr
+	.word RenderTiles
 
-	ldrb r2,[r10,#vicctrl2]
-	tst r2,#0x10
-	bne RenderTilesMCM
-								;!more modes to do!
+;----------------------------------------------------------------------------
 RenderTiles
+;----------------------------------------------------------------------------
 
 ;	mov r11,r11
 	ldr r2,=c64_map_base
@@ -762,48 +808,48 @@ bgrdloop
 
 	and r3,r0,#0x000000FF
 	ldrb r3,[r7,r3,lsl#3]		;read bitmap data
-	and r4,r1,#0x000000FF
+	and r10,r1,#0x000000FF
 	add r3,r12,r3,lsl#3
 
 	ldmia r3,{r2,r3}
-	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mul r4,r2,r10
+	mul r10,r3,r10
+	stmia r9!,{r4,r10}
 
 
 	and r3,r0,#0x0000FF00
 	ldrb r3,[r7,r3,lsr#5]		;read bitmap data
-	and r4,r1,#0x0000FF00
+	and r10,r1,#0x0000FF00
 	add r3,r12,r3,lsl#3
 
 	ldmia r3,{r2,r3}
-	mov r4,r4,lsr#8
-	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mov r10,r10,lsr#8
+	mul r4,r2,r10
+	mul r10,r3,r10
+	stmia r9!,{r4,r10}
 
 
 	and r3,r0,#0x00FF0000
 	ldrb r3,[r7,r3,lsr#13]		;read bitmap data
-	and r4,r1,#0x00FF0000
+	and r10,r1,#0x00FF0000
 	add r3,r12,r3,lsl#3
 
 	ldmia r3,{r2,r3}
-	mov r4,r4,lsr#16
-	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mov r10,r10,lsr#16
+	mul r4,r2,r10
+	mul r10,r3,r10
+	stmia r9!,{r4,r10}
 
 
 	and r3,r0,#0xFF000000
 	ldrb r3,[r7,r3,lsr#21]		;read bitmap data
-	mov r4,r1,lsr#24
+	mov r10,r1,lsr#24
 	add r3,r12,r3,lsl#3
 
 	ldmia r3,{r2,r3}
-	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mul r4,r2,r10
+	mul r10,r3,r10
+	stmia r9!,{r4,r10}
 
 	subs r8,r8,#1
 	bne bgrdloop
@@ -1052,10 +1098,6 @@ exit_tilemcm_render
 ;----------------------------------------------------------------------------
 RenderBmp
 ;----------------------------------------------------------------------------
-	ldrb r2,[r10,#vicctrl2]
-	tst r2,#0x10
-	bne RenderBmpMCM
-
 	ldr r2,=c64_map_base
 	ldr r5,[r2]
 	add r5,r5,r0
@@ -1067,6 +1109,7 @@ RenderBmp
 	add r6,r6,r1
 
 	add r10,r9,#320
+	mov r11,r11
 
 	ldr r7,=0x0F0F0F0F
 	ldr r11,=0x03030303
@@ -1083,8 +1126,8 @@ bgrdloop4
 
 	ldmia r3,{r2,r3}
 	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mul r4,r3,r4
+	stmia r9!,{r2,r4}
 
 
 	ldrb r3,[r6],#8				;read bitmap data
@@ -1094,8 +1137,8 @@ bgrdloop4
 	ldmia r3,{r2,r3}
 	mov r4,r4,lsr#8
 	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mul r4,r3,r4
+	stmia r9!,{r2,r4}
 
 
 	ldrb r3,[r6],#8				;read bitmap data
@@ -1105,8 +1148,8 @@ bgrdloop4
 	ldmia r3,{r2,r3}
 	mov r4,r4,lsr#16
 	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mul r4,r3,r4
+	stmia r9!,{r2,r4}
 
 
 	ldrb r3,[r6],#8				;read bitmap data
@@ -1114,9 +1157,9 @@ bgrdloop4
 	add r3,r12,r3,lsl#3
 
 	ldmia r3,{r2,r3}
-	mul r2,r4,r2
-	mul r3,r4,r3
-	stmia r9!,{r2,r3}
+	mul r0,r2,r4
+	mul r4,r3,r4
+	stmia r9!,{r0,r4}
 	
 	orr r1,r11,r1,lsl#4
 	str r1,[r10],#4				;background color
@@ -1142,79 +1185,44 @@ RenderBmpMCM;					MultiColorMode
 	add r6,r6,r0,lsl#3
 	add r6,r6,r1
 
-	ldr r12,=chr_decode_new
-	ldr r11,=0x3C
-	mov r8,#10					;width of C64 screen /4
+	mov r12,#0x18
+	mov r10,#0xFF
+	ldr r11,=0x03030300
+	mov r8,#40					;width of C64 screen
 bgrdloop5
-	ldr r0,[r4],#4				;Read from C64 Tilemap RAM (color 1,2)
-	ldr r1,[r5],#4				;Read from C64 Color RAM (color 3)
-
+	ldrb r0,[r4],#1				;Read from C64 Tilemap RAM (color 1,2)
+	ldrb r1,[r5],#1				;Read from C64 Color RAM (color 3)
+	
+	mov r0,r0,ror#4
+	orr r1,r11,r1,lsl#28
 	ldrb r2,[r6],#8				;read bitmap data
-	and r10,r0,#0x000000FF
-	orr r10,r10,r1,lsl#28
-	and r3,r2,#0x000000F0
-	orr r3,r10,r3,lsl#20
-
-	ldr r7,[r12,r3,ror#22]
-	str r7,[r9],#4
-
-	and r3,r2,#0x0000000F
-	orr r3,r10,r3,lsl#24
-	ldr r7,[r12,r3,ror#22]
-	str r7,[r9],#4
+	orr r1,r1,r0,lsl#12
+	orr r0,r1,r0,lsr#8
 
 
-	ldrb r2,[r6],#8				;read bitmap data
-	and r10,r0,#0x0000FF00
-	and r3,r1,#0x00000F00
-	orr r10,r10,r3,lsr#4
-	orr r3,r10,r2,lsr#4
+	and r1,r12,r2,lsr#3
+	and r3,r10,r0,lsr r1
 
-	ldr r7,[r12,r3,lsl#2]
-	str r7,[r9],#4
+	and r1,r12,r2,lsr#1
+	and r1,r10,r0,lsr r1
+	orr r3,r3,r1,lsl#16
 
-	and r3,r2,#0x0000000F
-	orr r3,r10,r3
-	ldr r7,[r12,r3,lsl#2]
-	str r7,[r9],#4
+	and r1,r12,r2,lsl#1
+	and r7,r10,r0,lsr r1
 
+	and r1,r12,r2,lsl#3
+	and r1,r10,r0,lsr r1
+	orr r7,r7,r1,lsl#16
 
-	ldrb r2,[r6],#8				;read bitmap data
-	and r10,r0,#0x00FF0000
-	and r3,r1,#0x000F0000
-	orr r10,r10,r3,lsr#4
-	and r3,r2,#0x000000F0
-	orr r3,r10,r3,lsl#4
+	orr r3,r3,r3,lsl#8
+	orr r7,r7,r7,lsl#8
 
-	ldr r7,[r12,r3,lsr#6]
-	str r7,[r9],#4
-
-	and r3,r2,#0x0000000F
-	orr r3,r10,r3,lsl#8
-	ldr r7,[r12,r3,lsr#6]
-	str r7,[r9],#4
-
-
-	ldrb r2,[r6],#8				;read bitmap data
-	and r10,r0,#0xFF000000
-	and r3,r1,#0x0F000000
-	orr r10,r10,r3,lsr#4
-	and r3,r2,#0x000000F0
-	orr r3,r10,r3,lsl#12
-
-	ldr r7,[r12,r3,lsr#14]
-	str r7,[r9],#4
-
-	and r3,r2,#0x0000000F
-	orr r3,r10,r3,lsl#16
-	ldr r7,[r12,r3,lsr#14]
-	str r7,[r9],#4
+	stmia r9!,{r3,r7}
 
 
 	subs r8,r8,#1
 	bne bgrdloop5
 
-	ldr r11,=0x03030303
 	ldr globalptr,=wram_global_base
 	ldrb r0,[r10,#vicbgr0col]	;background color
 	and r0,r0,#0x0F
@@ -1417,8 +1425,8 @@ spr_loop3
 
 
  .bss
-chr_decode_new			; 16*16*16*16*4
- .space 0x40000
+;chr_decode_new			; 16*16*16*16*4
+; .space 0x40000
 chr_decode
  .space 256*4
 chr_decode_2
