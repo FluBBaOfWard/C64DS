@@ -41,8 +41,6 @@
 		9CA4420F2A2CFB3600259966 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memory.h; sourceTree = "<group>"; };
 		9CA442102A2CFB3600259966 /* cia_tod.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = cia_tod.s; sourceTree = "<group>"; };
 		9CA442112A2CFB3600259966 /* cia_tod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cia_tod.h; sourceTree = "<group>"; };
-		9CA442122A2CFB3600259966 /* sid.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = sid.s; sourceTree = "<group>"; };
-		9CA442132A2CFB3600259966 /* sid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sid.h; sourceTree = "<group>"; };
 		9CA442142A2CFB3600259966 /* equates.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = equates.h; sourceTree = "<group>"; };
 		9CA442162A2CFB4F00259966 /* C64Keyboard.grit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = C64Keyboard.grit; sourceTree = "<group>"; };
 		9CA442172A2CFB4F00259966 /* C64Keyboard.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = C64Keyboard.png; sourceTree = "<group>"; };
@@ -64,6 +62,13 @@
 		9CA4422C2A2D20F400259966 /* Sound.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = Sound.s; sourceTree = "<group>"; };
 		9CA4422D2A2D23A800259966 /* cpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpu.h; sourceTree = "<group>"; };
 		9CA4422E2A2DE63000259966 /* io.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = io.h; sourceTree = "<group>"; };
+		9CA442302A2E1AE000259966 /* Version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Version.h; sourceTree = "<group>"; };
+		9CA442312A2E1AE000259966 /* ARM6581.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = ARM6581.i; sourceTree = "<group>"; };
+		9CA442322A2E1AE000259966 /* ARM6581.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = ARM6581.s; sourceTree = "<group>"; };
+		9CA442332A2E1AE000259966 /* ARM6581.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ARM6581.h; sourceTree = "<group>"; };
+		9CA442342A2E1AE000259966 /* SID6581_todo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SID6581_todo.txt; sourceTree = "<group>"; };
+		9CA442352A2E1AE000259966 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		9CA442362A2E1AE000259966 /* History.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = History.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -92,6 +97,7 @@
 		9CA441DF2A2CFB3600259966 /* source */ = {
 			isa = PBXGroup;
 			children = (
+				9CA4422F2A2E1AE000259966 /* ARM6581 */,
 				9CA4421F2A2D00DA00259966 /* ARM6502 */,
 				9CA441EA2A2CFB3600259966 /* Shared */,
 				9CA442142A2CFB3600259966 /* equates.h */,
@@ -104,8 +110,6 @@
 				9CA442292A2D1D9C00259966 /* FileHandling.c */,
 				9CA442112A2CFB3600259966 /* cia_tod.h */,
 				9CA442102A2CFB3600259966 /* cia_tod.s */,
-				9CA442132A2CFB3600259966 /* sid.h */,
-				9CA442122A2CFB3600259966 /* sid.s */,
 				9CA441E92A2CFB3600259966 /* 6510.s */,
 				9CA441E72A2CFB3600259966 /* machine.s */,
 				9CA4422D2A2D23A800259966 /* cpu.h */,
@@ -186,6 +190,20 @@
 				9CA442232A2D00DA00259966 /* M6502.s */,
 			);
 			path = ARM6502;
+			sourceTree = "<group>";
+		};
+		9CA4422F2A2E1AE000259966 /* ARM6581 */ = {
+			isa = PBXGroup;
+			children = (
+				9CA442352A2E1AE000259966 /* README.md */,
+				9CA442342A2E1AE000259966 /* SID6581_todo.txt */,
+				9CA442362A2E1AE000259966 /* History.txt */,
+				9CA442302A2E1AE000259966 /* Version.h */,
+				9CA442332A2E1AE000259966 /* ARM6581.h */,
+				9CA442312A2E1AE000259966 /* ARM6581.i */,
+				9CA442322A2E1AE000259966 /* ARM6581.s */,
+			);
+			path = ARM6581;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

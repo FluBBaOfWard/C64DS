@@ -1,10 +1,9 @@
 #include "equates.h"
 #include "memory.h"
 #include "ARM6502/M6502mac.h"
-//#include "ARM6502/M6502.i"
 
-	.global Machine_reset
-	.global Machine_run
+	.global machineReset
+	.global machineRun
 	.global BankSwitch_R
 	.global BankSwitch_0_W
 	.global BankSwitch_1_W
@@ -16,7 +15,7 @@
 
 	.section .text
 ;@----------------------------------------------------------------------------
-Machine_reset:
+machineReset:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
@@ -36,7 +35,7 @@ Machine_reset:
 	ldmfd sp!,{r4-r11,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
-Machine_run:
+machineRun:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
@@ -250,13 +249,17 @@ data_out:
 
 
 ;@----------------------------------------------------------------------------
-	.bss
+	.pool
+//	.bss
 Chargen:
-	.space 0x1000
+	.incbin "chargen.rom"
+//	.space 0x1000
 Basic:
-	.space 0x2000
+	.incbin "basic.rom"
+//	.space 0x2000
 Kernal:
-	.space 0x2000
+	.incbin "kernal.rom"
+//	.space 0x2000
 //Keyboard_gfx:			;@ Space for loading gfx
 //	.space 0x1000
 

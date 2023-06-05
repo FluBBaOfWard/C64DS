@@ -16,8 +16,8 @@
 #include "gui.h"
 #include "cia_tod.h"
 
-extern void Machine_reset(void);
-extern void Machine_run(void);
+extern void machineReset(void);
+extern void machineRun(void);
 extern u32 mytouch_x;
 extern u32 mytouch_y;
 extern u32 mytouch_press;
@@ -75,7 +75,7 @@ void myVblank(void) {
 //---------------------------------------------------------------------------------
 	vBlankOverflow = true;
 //	DC_FlushRange(EMUPALBUFF, 0x400);
-	vblIrqHandler();
+//	vblIrqHandler();
 	CIA_TOD_Count();
 }
 
@@ -84,26 +84,24 @@ void myVblank(void) {
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
 
-	// Allocate C64 ram from the heap
-	emu_ram_alloc = malloc(0x30600);
-	emu_ram_base = emu_ram_alloc + 0x400;
-
-	// Clear DS VRAM and calculate LUTs.
-//	gfxInit();
-
-
-	CIA_TOD_Init();
-
 	if (argc > 1) {
 		enableExit = true;
 	}
+	// Allocate C64 ram from the heap
+	emu_ram_alloc = malloc(0x30600);
+	emu_ram_base = emu_ram_alloc + 0x400;
 	setupGraphics();
-//	machineInit();
 
 	setupStream();
 	irqSet(IRQ_VBLANK, myVblank);
 	setupGUI();
 	getInput();
+	initSettings();
+
+//	machineInit();
+	// Clear DS VRAM and calculate LUTs.
+//	gfxInit();
+//	CIA_TOD_Init();
 //	loadCart(0,0);
 	if ( initFileHelper() ) {
 		loadSettings();
@@ -118,11 +116,7 @@ int main(int argc, char **argv) {
 		guiRunLoop();
 		if (!pauseEmulation) {
 			REG_BLDCNT_SUB = 0;
-			run();
-		} else {
-			REG_BLDCNT_SUB = BLEND_ALPHA|BLEND_SRC_BG2|BLEND_SRC_BG3|BLEND_DST_BG2|BLEND_DST_BACKDROP;
-			REG_BLDALPHA_SUB = 0x1004;
-			setupMenuPalette();
+//			run();
 		}
 	}
 	return 0;
@@ -237,20 +231,16 @@ static void setupGraphics() {
 	videoSetModeSub(MODE_3_2D
 					| DISPLAY_BG0_ACTIVE
 					| DISPLAY_BG1_ACTIVE
-					| DISPLAY_BG2_ACTIVE
-					| DISPLAY_BG3_ACTIVE
-					| DISPLAY_BG_EXT_PALETTE
 					);
-	REG_BG0CNT_SUB = BG_32x32 | BG_MAP_BASE(0) | BG_COLOR_16 | BG_TILE_BASE(1) | BG_PRIORITY(0);
-	REG_BG1CNT_SUB = BG_32x32 | BG_MAP_BASE(1) | BG_COLOR_16 | BG_TILE_BASE(1) | BG_PRIORITY(0);
-	REG_BG2CNT_SUB = BG_32x32 | BG_MAP_BASE(2) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(2);
-	REG_BG3CNT_SUB = BG_RS_64x64 | BG_MAP_BASE(4) | BG_COLOR_16 | BG_TILE_BASE(4) | BG_PRIORITY(1) | BG_WRAP_ON;
+	// Set up two backgrounds for menu
+	REG_BG0CNT_SUB = BG_32x32 | BG_MAP_BASE(0) | BG_COLOR_16 | BG_TILE_BASE(0) | BG_PRIORITY(0);
+	REG_BG1CNT_SUB = BG_32x32 | BG_MAP_BASE(1) | BG_COLOR_16 | BG_TILE_BASE(0) | BG_PRIORITY(0);
 	REG_BG1HOFS_SUB = 0;
 	REG_BG1VOFS_SUB = 0;
 	map0sub = BG_MAP_RAM_SUB(0);
 	map1sub = BG_MAP_RAM_SUB(1);
 
-	decompress(EmuFontTiles, BG_GFX_SUB+0x3200, LZ77Vram);
+	decompress(EmuFontTiles, BG_GFX_SUB+0x1200, LZ77Vram);
 	setupMenuPalette();
 }
 

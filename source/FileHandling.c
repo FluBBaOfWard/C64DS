@@ -12,7 +12,7 @@
 //#include "Cart.h"
 //#include "cpu.h"
 #include "Gfx.h"
-//#include "io.h"
+#include "io.h"
 #include "Memory.h"
 
 static const char *const folderName = "c64ds";
@@ -29,23 +29,8 @@ int initSettings() {
 	cfg.emuSettings = AUTOPAUSE_EMULATION | AUTOLOAD_NVRAM;
 	cfg.sleepTime = 60*60*5;
 	cfg.controller = 0;					// Don't swap A/B
-	cfg.birthYear[0] = 0x19;
-	cfg.birthYear[1] = 0x99;
-	cfg.birthMonth = bin2BCD(PersonalData->birthMonth);
-	cfg.birthDay = bin2BCD(PersonalData->birthDay);
 	cfg.language = (PersonalData->language == 0) ? 0 : 1;
 
-	int i;
-	for (i = 0; i < PersonalData->nameLen; i++) {
-		s16 char16 = PersonalData->name[i];
-		if (char16 < 0xFF) {
-			cfg.name[i] = char16;
-		}
-		else {
-			break;
-		}
-	}
-	cfg.name[i] = 0;
 	return 0;
 }
 
@@ -75,7 +60,7 @@ int loadSettings() {
 	gContrastValue = (cfg.gammaValue>>4) & 0xF;
 	emuSettings   = cfg.emuSettings & ~EMUSPEED_MASK;	// Clear speed setting.
 	sleepTime     = cfg.sleepTime;
-//	joyCfg        = (joyCfg & ~0x400)|((cfg.controller & 1)<<10);
+	joyCfg        = (joyCfg & ~0x400)|((cfg.controller & 1)<<10);
 	strlcpy(currentDir, cfg.currentPath, sizeof(currentDir));
 
 	infoOutput("Settings loaded.");
@@ -91,7 +76,7 @@ void saveSettings() {
 	cfg.gammaValue  = (gGammaValue & 0xF) | (gContrastValue<<4);
 	cfg.emuSettings = emuSettings & ~EMUSPEED_MASK;		// Clear speed setting.
 	cfg.sleepTime   = sleepTime;
-//	cfg.controller  = (joyCfg>>10)&1;
+	cfg.controller  = (joyCfg>>10)&1;
 	strlcpy(cfg.currentPath, currentDir, sizeof(cfg.currentPath));
 
 	if (findFolder(folderName)) {

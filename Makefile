@@ -27,7 +27,8 @@ BUILD		:=	build
 SOURCES		:=	source	\
 				source/Shared \
 				source/Shared/Unzip \
-				source/ARM6502
+				source/ARM6502 \
+				source/ARM6581
 DATA		:=	data
 INCLUDES	:=	include
 GRAPHICS	:=	source/Shared/graphics \
