@@ -36,8 +36,8 @@ soundReset:
 	str r0,pcmWritePtr
 	mov r0,#0
 	str r0,pcmReadPtr
-	ldr spxptr,=sphinx0
-	bl wsAudioReset			;@ sound
+//	ldr spxptr,=sphinx0
+//	bl wsAudioReset			;@ sound
 	mov r0,#WRITE_BUFFER_SIZE
 	ldr r1,=WAVBUFFER
 	bl silenceMix
@@ -60,7 +60,7 @@ VblSound2:					;@ r0=length, r1=pointer
 	bne silenceMix
 
 	stmfd sp!,{r0,r4,r5,lr}
-	ldr spxptr,=sphinx0
+//	ldr spxptr,=sphinx0
 	ldr r4,pcmReadPtr
 	add r5,r4,r0
 	str r5,pcmReadPtr
@@ -76,7 +76,7 @@ VblSound2:					;@ r0=length, r1=pointer
 	mov r0,r0,asr#3
 	str r0,neededExtra
 	bic r0,r0,#1
-	str r0,[spxptr,#missingSamplesCnt]
+//	str r0,[spxptr,#missingSamplesCnt]
 
 	ldmfd sp!,{r0,r4,r5,lr}
 	bx lr
@@ -115,7 +115,8 @@ soundUpdate:			;@ Should be called at every scanline
 	str r1,pcmWritePtr
 	ldr r1,=WAVBUFFER
 	add r1,r1,r2,lsr#19
-	b wsAudioMixer
+//	b wsAudioMixer
+	bx lr
 
 ;@----------------------------------------------------------------------------
 pcmWritePtr:	.long 0

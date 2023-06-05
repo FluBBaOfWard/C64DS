@@ -6,15 +6,15 @@
 #include "Shared/FileHelper.h"
 #include "Shared/AsmExtra.h"
 #include "Gui.h"
+#include "FileHandling.h"
+#include "EmuFont.h"
 
-#include "gfx.h"
+#include "cpu.h"
+#include "Gfx.h"
+#include "io.h"
 #include "sound.h"
 #include "gui.h"
 #include "cia_tod.h"
-
-//#define sample_rate 32768
-#define sample_rate 55930
-#define buffer_size (512+10)
 
 extern void Machine_reset(void);
 extern void Machine_run(void);
@@ -56,7 +56,19 @@ static const u8 guiPalette[] = {
 	0xED,0xED,0xED, 0xFF,0xFF,0xFF, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00,
 	0x00,0x00,0x00, 0x00,0x00,0x00, 0x70,0x70,0x20, 0x88,0x88,0x40, 0xA0,0xA0,0x60, 0xB8,0xB8,0x80, 0xD0,0xD0,0x90, 0xE8,0xE8,0xA0,
 	0xF7,0xF7,0xC0, 0xFF,0xFF,0xE0, 0x00,0x00,0x60, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00
-	};
+};
+
+int packState(void *statePtr) {
+	return 0;
+}
+
+void unpackState(const void *statePtr) {
+}
+
+int getStateSize() {
+	return 0;
+}
+
 
 //---------------------------------------------------------------------------------
 void myVblank(void) {
@@ -72,41 +84,48 @@ void myVblank(void) {
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
 
-	// allocate some RAM to sub & main bg
-	GX_SetBankForBG(GX_VRAM_BG_256_BD);
-	GX_SetBankForOBJ(GX_VRAM_OBJ_128_A);
-
-	// set sub & main background mode
-	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_2D);
-	GXS_SetGraphicsMode(GX_BGMODE_0);
-	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);
-
-
-	// setup main bg1
-	G2_SetBG1Control(GX_BG_SCRSIZE_TEXT_256x256, GX_BG_COLORMODE_16, GX_BG_SCRBASE_0x0000, GX_BG_CHARBASE_0x00000, GX_BG_EXTPLTT_01);
-	G2_SetBG1Priority(0);
-	// setup main bg2
-	G2_SetBG2Control256Bmp(GX_BG_SCRSIZE_256BMP_512x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
-	G2_SetBG2Priority(1);
-	// setup main bg3
-	G2_SetBG3Control256Bmp(GX_BG_SCRSIZE_256BMP_512x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
-	G2_SetBG3Priority(1);
-	//	bg1,bg2,bg3 & obj is visible
-	GX_SetVisiblePlane(GX_PLANEMASK_BG1 | GX_PLANEMASK_BG2 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
-	tile_base = G2_GetBG2ScrPtr();
-	
-	obj_base = G2_GetOBJCharPtr();
-
-	// allocate C64 ram from the heap
-	emu_ram_alloc = OS_AllocFromHeap(OS_ARENA_MAIN, handle, 0x30600);
+	// Allocate C64 ram from the heap
+	emu_ram_alloc = malloc(0x30600);
 	emu_ram_base = emu_ram_alloc + 0x400;
 
-	//Clear DS VRAM and calculate LUTs.
-	GFX_init();
+	// Clear DS VRAM and calculate LUTs.
+//	gfxInit();
 
 
 	CIA_TOD_Init();
 
+	if (argc > 1) {
+		enableExit = true;
+	}
+	setupGraphics();
+//	machineInit();
+
+	setupStream();
+	irqSet(IRQ_VBLANK, myVblank);
+	setupGUI();
+	getInput();
+//	loadCart(0,0);
+	if ( initFileHelper() ) {
+		loadSettings();
+//		autoLoadGame();
+	} else {
+		drawText("fatInitDefault() failure.",23,0);
+	}
+
+	while (1) {
+		waitVBlank();
+		checkTimeOut();
+		guiRunLoop();
+		if (!pauseEmulation) {
+			REG_BLDCNT_SUB = 0;
+			run();
+		} else {
+			REG_BLDCNT_SUB = BLEND_ALPHA|BLEND_SRC_BG2|BLEND_SRC_BG3|BLEND_DST_BG2|BLEND_DST_BACKDROP;
+			REG_BLDALPHA_SUB = 0x1004;
+			setupMenuPalette();
+		}
+	}
+	return 0;
 }
 
 
@@ -160,6 +179,32 @@ void setEmuSpeed(int speed) {
 	}
 }
 
+/*
+ // allocate some RAM to sub & main bg
+ GX_SetBankForBG(GX_VRAM_BG_256_BD);
+ GX_SetBankForOBJ(GX_VRAM_OBJ_128_A);
+
+ // set sub & main background mode
+ GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_2D);
+ GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);
+
+
+ // setup main bg1
+ G2_SetBG1Control(GX_BG_SCRSIZE_TEXT_256x256, GX_BG_COLORMODE_16, GX_BG_SCRBASE_0x0000, GX_BG_CHARBASE_0x00000, GX_BG_EXTPLTT_01);
+ G2_SetBG1Priority(0);
+ // setup main bg2
+ G2_SetBG2Control256Bmp(GX_BG_SCRSIZE_256BMP_512x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+ G2_SetBG2Priority(1);
+ // setup main bg3
+ G2_SetBG3Control256Bmp(GX_BG_SCRSIZE_256BMP_512x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+ G2_SetBG3Priority(1);
+ //	bg1,bg2,bg3 & obj is visible
+ GX_SetVisiblePlane(GX_PLANEMASK_BG1 | GX_PLANEMASK_BG2 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
+ tile_base = G2_GetBG2ScrPtr();
+ 
+ obj_base = G2_GetOBJCharPtr();
+
+ */
 //---------------------------------------------------------------------------------
 static void setupGraphics() {
 //---------------------------------------------------------------------------------

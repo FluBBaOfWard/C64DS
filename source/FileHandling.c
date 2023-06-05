@@ -18,6 +18,7 @@
 static const char *const folderName = "c64ds";
 static const char *const settingName = "settings.cfg";
 
+int sramSize = 0;
 ConfigData cfg;
 
 //---------------------------------------------------------------------------------
@@ -105,9 +106,9 @@ void saveSettings() {
 		infoOutput("Couldn't open file:");
 		infoOutput(settingName);
 	}
-	saveIntEeproms();
+//	saveIntEeproms();
 }
-/*
+
 void loadNVRAM() {
 	FILE *wssFile;
 	char nvRamName[FILENAMEMAXLENGTH];
@@ -116,7 +117,7 @@ void loadNVRAM() {
 
 	if (sramSize > 0) {
 		saveSize = sramSize;
-		nvMem = wsSRAM;
+//		nvMem = wsSRAM;
 		setFileExtension(nvRamName, currentFilename, ".ram", sizeof(nvRamName));
 	}
 	else {
@@ -148,7 +149,7 @@ void saveNVRAM() {
 
 	if (sramSize > 0) {
 		saveSize = sramSize;
-		nvMem = wsSRAM;
+//		nvMem = wsSRAM;
 		setFileExtension(nvRamName, currentFilename, ".ram", sizeof(nvRamName));
 	}
 	else {
@@ -169,7 +170,7 @@ void saveNVRAM() {
 		infoOutput(nvRamName);
 	}
 }
-*/
+
 void loadState() {
 //	loadDeviceState(folderName);
 }
@@ -185,12 +186,12 @@ bool loadGame(const char *gameName) {
 		drawText("     Please wait, loading.", 11, 0);
 //		gRomSize = loadROM(romSpacePtr, gameName, maxRomSize);
 //		if ( gRomSize ) {
-			checkMachine();
+//			checkMachine();
 			setEmuSpeed(0);
 //			loadCart();
-			gameInserted = true;
+//			gameInserted = true;
 			if ( emuSettings & AUTOLOAD_NVRAM ) {
-				loadNVRAM();
+//				loadNVRAM();
 			}
 			if ( emuSettings & AUTOLOAD_STATE ) {
 				loadState();
@@ -269,21 +270,21 @@ static bool selectBios(char *dest, const char *fileTypes) {
 
 void selectBnWBios() {
 	if ( selectBios(cfg.monoBiosPath, ".ws.rom.zip") ) {
-		loadBnWBIOS();
+//		loadBnWBIOS();
 	}
 	cls(0);
 }
 
 void selectColorBios() {
 	if ( selectBios(cfg.colorBiosPath, ".ws.wsc.rom.zip") ) {
-		loadColorBIOS();
+//		loadColorBIOS();
 	}
 	cls(0);
 }
 
 void selectCrystalBios() {
 	if ( selectBios(cfg.crystalBiosPath, ".ws.wsc.rom.zip") ) {
-		loadCrystalBIOS();
+//		loadCrystalBIOS();
 	}
 	cls(0);
 }

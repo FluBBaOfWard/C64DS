@@ -9,6 +9,7 @@
 #include "Gfx.h"
 //#include "io.h"
 #include "cpu.h"
+#include "ARM6502/Version.h"
 
 #define EMUVERSION "V0.1.0 2023-05-04"
 
@@ -20,13 +21,11 @@ void hacksInit(void);
 
 static void paletteChange(void);
 static void machineSet(void);
-static void headphonesSet(void);
 static void speedHackSet(void);
 static void refreshChgSet(void);
 static void borderSet(void);
-static void languageSet(void);
 
-static void uiMachine(void);
+//static void uiMachine(void);
 static void uiDebug(void);
 static void updateGameInfo(void);
 
@@ -38,14 +37,14 @@ const fptr fnList2[] = {ui4, ui5, ui6, ui7, ui8};
 const fptr fnList3[] = {uiDummy};
 const fptr fnList4[] = {autoBSet, autoASet, controllerSet, swapABSet};
 const fptr fnList5[] = {gammaSet, contrastSet, paletteChange, borderSet};
-const fptr fnList6[] = {machineSet, selectBnWBios, selectColorBios, selectCrystalBios, selectEEPROM, clearIntEeproms, headphonesSet, speedHackSet /*languageSet*/};
+const fptr fnList6[] = {machineSet, selectBnWBios, selectColorBios, selectCrystalBios, speedHackSet /*languageSet*/};
 const fptr fnList7[] = {speedSet, refreshChgSet, autoStateSet, autoNVRAMSet, autoSettingsSet, autoPauseGameSet, powerSaveSet, screenSwapSet, sleepSet};
-const fptr fnList8[] = {debugTextSet, fgrLayerSet, bgrLayerSet, sprLayerSet, stepFrame};
+const fptr fnList8[] = {debugTextSet/*, fgrLayerSet, bgrLayerSet, sprLayerSet, stepFrame*/};
 const fptr fnList9[] = {exitEmulator, backOutOfMenu};
 const fptr fnList10[] = {uiDummy};
 const fptr *const fnListX[] = {fnList0, fnList1, fnList2, fnList3, fnList4, fnList5, fnList6, fnList7, fnList8, fnList9, fnList10};
 u8 menuXItems[] = {ARRSIZE(fnList0), ARRSIZE(fnList1), ARRSIZE(fnList2), ARRSIZE(fnList3), ARRSIZE(fnList4), ARRSIZE(fnList5), ARRSIZE(fnList6), ARRSIZE(fnList7), ARRSIZE(fnList8), ARRSIZE(fnList9), ARRSIZE(fnList10)};
-const fptr drawUIX[] = {uiNullNormal, uiFile, uiOptions, uiAbout, uiController, uiDisplay, uiMachine, uiSettings, uiDebug, uiDummy, uiDummy};
+const fptr drawUIX[] = {uiNullNormal, uiFile, uiOptions, uiAbout, uiController, uiDisplay, uiSettings, uiDebug, uiDummy, uiDummy};
 
 u8 gGammaValue = 0;
 u8 gContrastValue = 3;
@@ -113,7 +112,7 @@ void uiOptions() {
 	setupMenu();
 	drawMenuItem("Controller");
 	drawMenuItem("Display");
-	drawMenuItem("Machine");
+//	drawMenuItem("Machine");
 	drawMenuItem("Settings");
 	drawMenuItem("Debug");
 }
@@ -129,27 +128,26 @@ void uiAbout() {
 
 	drawMenuText(gameInfoString, 9, 0);
 
-	drawMenuText("NitroSwan    " EMUVERSION, 21, 0);
-//	drawMenuText("Sphinx       " SPHINXVERSION, 22, 0);
-//	drawMenuText("ARMV30MZ     " ARMV30MZVERSION, 23, 0);
+	drawMenuText("C64DS        " EMUVERSION, 21, 0);
+	drawMenuText("ARM6502      " ARM6502VERSION, 22, 0);
 }
 
 void uiController() {
 	setupSubMenu("Controller Settings");
 	drawSubItem("B Autofire:", autoTxt[autoB]);
 	drawSubItem("A Autofire:", autoTxt[autoA]);
-	drawSubItem("Controller:", ctrlTxt[(joyCfg>>29)&1]);
-	drawSubItem("Swap A-B:  ", autoTxt[(joyCfg>>10)&1]);
+//	drawSubItem("Controller:", ctrlTxt[(joyCfg>>29)&1]);
+//	drawSubItem("Swap A-B:  ", autoTxt[(joyCfg>>10)&1]);
 }
 
 void uiDisplay() {
 	setupSubMenu("Display Settings");
 	drawSubItem("Gamma:", brighTxt[gGammaValue]);
 	drawSubItem("Contrast:", brighTxt[gContrastValue]);
-	drawSubItem("B&W Palette:", palTxt[gPaletteBank]);
+//	drawSubItem("B&W Palette:", palTxt[gPaletteBank]);
 	drawSubItem("Border:", autoTxt[gBorderEnable]);
 }
-
+/*
 static void uiMachine() {
 	setupSubMenu("Machine Settings");
 	drawSubItem("Machine:", machTxt[gMachineSet]);
@@ -158,11 +156,10 @@ static void uiMachine() {
 	drawSubItem("Select WS Crystal Bios ->", NULL);
 	drawSubItem("Import Internal EEPROM ->", NULL);
 	drawSubItem("Clear Internal EEPROM", NULL);
-	drawSubItem("Headphones:", autoTxt[(emuSettings&ENABLE_HEADPHONES)>>18]);
 	drawSubItem("Cpu Speed Hacks:", autoTxt[(emuSettings&ALLOW_SPEED_HACKS)>>17]);
 //	drawSubItem("Language: ", langTxt[gLang]);
 }
-
+*/
 void uiSettings() {
 	setupSubMenu("Settings");
 	drawSubItem("Speed:", speedTxt[(emuSettings>>6)&3]);
@@ -179,10 +176,9 @@ void uiSettings() {
 void uiDebug() {
 	setupSubMenu("Debug");
 	drawSubItem("Debug Output:", autoTxt[gDebugSet&1]);
-	drawSubItem("Disable Foreground:", autoTxt[(gGfxMask>>1)&1]);
-	drawSubItem("Disable Background:", autoTxt[gGfxMask&1]);
-	drawSubItem("Disable Sprites:", autoTxt[(gGfxMask>>4)&1]);
-	drawSubItem("Step Frame", NULL);
+//	drawSubItem("Disable Background:", autoTxt[gGfxMask&1]);
+//	drawSubItem("Disable Sprites:", autoTxt[(gGfxMask>>4)&1]);
+//	drawSubItem("Step Frame", NULL);
 }
 
 
@@ -199,13 +195,13 @@ void nullUIDebug(int key) {
 }
 
 void resetGame() {
-	checkMachine();
-	loadCart();
+//	checkMachine();
+//	loadCart();
 }
 
 void updateGameInfo() {
 	char catalog[8];
-	char2HexStr(catalog, gGameID);
+//	char2HexStr(catalog, gGameID);
 	strlMerge(gameInfoString, "Game #: 0x", catalog, sizeof(gameInfoString));
 }
 //---------------------------------------------------------------------------------
@@ -244,22 +240,22 @@ void debugCrashInstruction() {
 //---------------------------------------------------------------------------------
 /// Switch between Player 1 & Player 2 controls
 void controllerSet() {				// See io.s: refreshEMUjoypads
-	joyCfg ^= 0x20000000;
+//	joyCfg ^= 0x20000000;
 }
 
 /// Swap A & B buttons
 void swapABSet() {
-	joyCfg ^= 0x400;
+//	joyCfg ^= 0x400;
 }
 
 /// Change gamma (brightness)
 void gammaSet() {
 	gGammaValue++;
 	if (gGammaValue > 4) gGammaValue = 0;
-	paletteInit(gGammaValue, gContrastValue);
-	monoPalInit(gGammaValue, gContrastValue);
-	paletteTxAll();					// Make new palette visible
-	setupEmuBorderPalette();
+//	paletteInit(gGammaValue, gContrastValue);
+//	monoPalInit(gGammaValue, gContrastValue);
+//	paletteTxAll();					// Make new palette visible
+//	setupEmuBorderPalette();
 	setupMenuPalette();
 	settingsChanged = true;
 }
@@ -268,64 +264,55 @@ void gammaSet() {
 void contrastSet() {
 	gContrastValue++;
 	if (gContrastValue > 4) gContrastValue = 0;
-	paletteInit(gGammaValue, gContrastValue);
-	monoPalInit(gGammaValue, gContrastValue);
-	paletteTxAll();					// Make new palette visible
-	setupEmuBorderPalette();
+//	paletteInit(gGammaValue, gContrastValue);
+//	monoPalInit(gGammaValue, gContrastValue);
+//	paletteTxAll();					// Make new palette visible
+//	setupEmuBorderPalette();
 	settingsChanged = true;
 }
 
 /// Turn on/off rendering of foreground
 void fgrLayerSet() {
-	gGfxMask ^= 0x02;
+//	gGfxMask ^= 0x02;
 }
 /// Turn on/off rendering of background
 void bgrLayerSet() {
-	gGfxMask ^= 0x01;
+//	gGfxMask ^= 0x01;
 }
 /// Turn on/off rendering of sprites
 void sprLayerSet() {
-	gGfxMask ^= 0x10;
+//	gGfxMask ^= 0x10;
 }
 
 void paletteChange() {
-	gPaletteBank++;
+/*	gPaletteBank++;
 	if (gPaletteBank > 7) {
 		gPaletteBank = 0;
 	}
 	monoPalInit(gGammaValue, gContrastValue);
 	paletteTxAll();
-	setupEmuBorderPalette();
+	setupEmuBorderPalette();*/
 	settingsChanged = true;
 }
 
 void borderSet() {
 	gBorderEnable ^= 0x01;
-	setupEmuBorderPalette();
-}
-
-void languageSet() {
-	gLang ^= 0x01;
+//	setupEmuBorderPalette();
 }
 
 void machineSet() {
-	gMachineSet++;
-	if (gMachineSet >= HW_SELECT_END) {
-		gMachineSet = 0;
-	}
+//	gMachineSet++;
+//	if (gMachineSet >= HW_SELECT_END) {
+//		gMachineSet = 0;
+//	}
 }
 
 void speedHackSet() {
 	emuSettings ^= ALLOW_SPEED_HACKS;
-	hacksInit();
-}
-
-void headphonesSet() {
-	emuSettings ^= ENABLE_HEADPHONES;
-	setHeadphones(emuSettings & ENABLE_HEADPHONES);
+//	hacksInit();
 }
 
 void refreshChgSet() {
 	emuSettings ^= ALLOW_REFRESH_CHG;
-	updateLCDRefresh();
+//	updateLCDRefresh();
 }

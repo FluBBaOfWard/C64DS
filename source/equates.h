@@ -1,7 +1,9 @@
 #define SDK_ASM
 
 
-;----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+
+globalptr	.req r10
 
 
 AGB_IRQVECT		= 0x03007FFC
@@ -12,7 +14,7 @@ AGB_SRAM		= 0x0A000000
 DEBUGSCREEN		= NTR_VRAM+0x3800
 
 
-;----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
 
 #define opz 0
 #define readmem_tbl		256*4
@@ -33,7 +35,7 @@ DEBUGSCREEN		= NTR_VRAM+0x3800
 #define frame			299*4
 #define irqPending		300*4
 
-			;gfx.s
+			;@ gfx.s
 #define vic_base_offset 0x4C0
 
 #define vicspr0x		vic_base_offset
@@ -85,7 +87,7 @@ DEBUGSCREEN		= NTR_VRAM+0x3800
 #define vicspr7col		vic_base_offset +46
 #define vicempty0		vic_base_offset +47
 
-			;io.s
+			;@ io.s
 #define cia_base_offset 0x4F0
 			
 #define cia1porta		cia_base_offset
@@ -130,24 +132,21 @@ DEBUGSCREEN		= NTR_VRAM+0x3800
 #define cia2nmi			cia_base_offset +49
 
 
-;-----------------------------------------------------------cartflags
+;@-----------------------------------------------------------cartflags
 #define SRAM		0x02	//;@ save SRAM
-;-----------------------------------------------------------emuflags
+;@-----------------------------------------------------------emuflags
 #define PALTIMING	1	//;@ PAL timing =)
 #define EXPORTFLAG	2	//;@ JAP/Rest of world
 #define COUNTRY		4	//;@ 0=US 1=JAP
-;?					16
+;@ ?				16
 #define FOLLOWMEM   32	//;@ 0=follow sprite, 1=follow mem
 
-				;bits 8-15=scale type
+				;@ Bits 8-15=scale type
 
 #define UNSCALED_NOAUTO	0	//;@ display types
 #define UNSCALED_AUTO	1
 #define SCALED			2
 #define SCALED_SPRITES	3
 
-				;bits 16-31=sprite follow val
-
-
-	.end
+				;@ Bits 16-31=sprite follow val
 

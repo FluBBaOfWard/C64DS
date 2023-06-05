@@ -1,12 +1,9 @@
 #include "equates.h"
-#include "6510.h"
+#include "ARM6502/M6502.i"
 
 //	.extern Chargen
 //	.extern Basic
 //	.extern Kernal
-	.extern _binary_chargen_rom
-	.extern _binary_basic_rom
-	.extern _binary_kernal_rom
 	.extern BankSwitch_R
 	.extern BankSwitch_0_W
 	.extern BankSwitch_1_W
@@ -24,7 +21,7 @@
 //	.global rom_R0
 	.global rom_W
 
-	.text mem_read_write
+	.section .text
 ;@----------------------------------------------------------------------------
 empty_IO_R:		;@ Read bad address (error)
 ;@----------------------------------------------------------------------------
@@ -87,8 +84,7 @@ ram_low_W:		;@ Ram write ($0000-$00FF)
 ;@----------------------------------------------------------------------------
 basic_R:		;@ Rom read
 ;@----------------------------------------------------------------------------
-//	ldr r1,=Basic-0xA000
-	ldr r1,=_binary_basic_rom-0xA000
+	ldr r1,=Basic-0xA000
 	ldrb r0,[r1,addy]
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -96,15 +92,13 @@ chargen_R:		;@ Rom read
 ;@----------------------------------------------------------------------------
 	cmp addy,#0xD000
 	ldrmib r0,[m6502zpage,addy]
-	ldrpl r1,=_binary_chargen_rom-0xD000
-//	ldrpl r1,=Chargen-0xD000
+	ldrpl r1,=Chargen-0xD000
 	ldrplb r0,[r1,addy]
 	bx lr
 ;@----------------------------------------------------------------------------
 kernal_R:		;@ Rom read
 ;@----------------------------------------------------------------------------
-//	ldr r1,=Kernal-0xE000
-	ldr r1,=_binary_kernal_rom-0xE000
+	ldr r1,=Kernal-0xE000
 	ldrb r0,[r1,addy]
 	bx lr
 ;@----------------------------------------------------------------------------

@@ -1,20 +1,20 @@
 #include "equates.h"
 #include "memory.h"
 #include "ARM6502/M6502mac.h"
-#include "ARM6502/M6502.h"
+//#include "ARM6502/M6502.i"
 
 	.global Machine_reset
 	.global Machine_run
 	.global BankSwitch_R
 	.global BankSwitch_0_W
 	.global BankSwitch_1_W
-//	.global Chargen
-//	.global Basic
-//	.global Kernal
+	.global Chargen
+	.global Basic
+	.global Kernal
 //	.global Keyboard_gfx
 
 
-	.text machine
+	.section .text
 ;@----------------------------------------------------------------------------
 Machine_reset:
 ;@----------------------------------------------------------------------------
@@ -28,10 +28,10 @@ Machine_reset:
 	str m6502zpage,[r0]
 
 	bl Mem_reset
-	bl GFX_reset
+	bl gfxReset
 	bl IO_reset
 //	bl SOUND_reset
-	bl CPU_reset
+	bl cpuReset
 
 	ldmfd sp!,{r4-r11,lr}
 	bx lr
@@ -46,7 +46,7 @@ Machine_run:
 
 	bl ManageInput
 	mov r0,#0
-	bl run_frame
+	bl run
 
 	ldmfd sp!,{r4-r11,lr}
 	bx lr
@@ -84,16 +84,14 @@ tbloop1:
 
 	ldr r7,=basic_R
 	mov r0,#0x0D			;@ Basic
-	ldr r1,=_binary_basic_rom
-//	ldr r1,=Basic
+	ldr r1,=Basic
 	str r1,[r4,r0,lsl#2]
 	str r7,[r5,r0,lsl#2]	;@ RdMem
 	str r8,[r6,r0,lsl#2]	;@ WrMem
 
 	ldr r7,=kernal_R
 	mov r0,#0x0F			;@ Kernal
-	ldr r1,=_binary_kernal_rom
-//	ldr r1,=Kernal
+	ldr r1,=Kernal
 	str r1,[r4,r0,lsl#2]
 	str r7,[r5,r0,lsl#2]	;@ RdMem
 	str r8,[r6,r0,lsl#2]	;@ WrMem
@@ -167,7 +165,7 @@ memaps:
 flush:		;@ Update cpu_pc & lastbank
 ;@------------------------------------------
 	ldr r1,[r10,#lastbank]
-	sub m6502_pc,m6502_pc,r1
+	sub m6502pc,m6502pc,r1
 	encodePC
 
 	ldmfd sp!,{r3-r7}
@@ -247,18 +245,18 @@ setPort:
 	ldmfd sp!,{r0,r3,pc}
 ;@----------------------------------------------------------------------------
 data_out:
-	.word	0x3f
+	.long	0x3f
 
 
 
 ;@----------------------------------------------------------------------------
 	.bss
-//Chargen:
-//	.space 0x1000
-//Basic:
-//	.space 0x2000
-//Kernal:
-//	.space 0x2000
+Chargen:
+	.space 0x1000
+Basic:
+	.space 0x2000
+Kernal:
+	.space 0x2000
 //Keyboard_gfx:			;@ Space for loading gfx
-///	.space 0x1000
+//	.space 0x1000
 

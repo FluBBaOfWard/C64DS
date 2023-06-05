@@ -1,15 +1,22 @@
+#include "Shared/nds_asm.h"
+#include "ARM6502/M6502.i"
 #include "equates.h"
 
 	.global run
 	.global stepFrame
+	.global cpuReset
 	.global irq_scanlinehook
 	.global frametotal
+	.global waitMaskIn
+	.global waitMaskOut
 	.global sleeptime
 	.global novblankwait
+	.global wram_global_base
 
-	.text machine_cpu
+	.section .text
 ;@----------------------------------------------------------------------------
-run:		;@ r0=0 to return after frame
+run:						;@ Return after X frame(s)
+	.type run STT_FUNC
 ;@----------------------------------------------------------------------------
 //	mov r1,#0
 //	strb r1,novblankwait
@@ -24,15 +31,16 @@ run:		;@ r0=0 to return after frame
 	b line0x
 
 ;@----------------------------------------------------------------------------
-stepFrame:
+stepFrame:					;@ Return after 1 frame
+	.type stepFrame STT_FUNC
 ;@----------------------------------------------------------------------------
 	bx lr
 ;@----------------------------------------------------------------------------
 ;@ Cycles ran out
 ;@----------------------------------------------------------------------------
 line0:
-	ldr r2,=cpustate
-	stmia r2,{m6502_nz-m6502_pc}	;@ Save 6502 state
+	add r0,m6502ptr,#m6502Regs
+	stmia r0,{m6502nz-m6502pc}	;@ Save 6502 state
 waitformulti:
 	ldr r1,=0x04000130			;@ Refresh input every frame
 	ldrh r0,[r1]
@@ -113,9 +121,8 @@ line0x:
 	beq l03
 l01:
 	ldr r0,emuflags
-	tst r0,#PALTIMING
-	moveq r1,#0x01			;@ VBL wait
-	movne r1,#0x20			;@ Timer2 wait
+//	tst r0,#PALTIMING
+	mov r1,#0x01			;@ VBL wait
 
 	cmp r4,#1
 	movne r0,#0				;@ Wait for vblank if it hasn't allready happened.
@@ -134,8 +141,8 @@ l03:
 
 //	mov r11,r11
 
-	ldr r0,=cpustate
-	ldmia r0,{m6502_nz-m6502_pc}	;@ Restore 6502 state
+	add r0,m6502ptr,#m6502Regs
+	ldmia r0,{m6502nz-m6502pc}	;@ Restore 6502 state
 
 	adr r0,line1_to_VBL
 	str r0,[r10,#nexttimeout]
@@ -207,18 +214,50 @@ VICRasterCheck:
 	strb r0,[r10,#vicirqflag]
 	
 norasterirq:
-	b CheckIRQs
+	b m6502CheckIrqs
 
 
+;@----------------------------------------------------------------------------
+cpuReset:		;@ Called by loadCart/resetGame
+;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+
+;@---Speed - 0.96MHz / 50Hz
+	mov r0,#63
+	str r1,[r10,#cyclesperscanline]
+;@--------------------------------------
+	ldr r0,=m6502_0
+	bl m6502Reset
+
+	ldmfd sp!,{lr}
+	bx lr
 ;@----------------------------------------------------------
-AGBjoypad:		.word 0
-EMUjoypad:		.word 0
-fiveminutes:	.word 5*60*60
-sleeptime:		.word 5*60*60
-dontstop:		.word 0
-novblankwait:	.word 0
-songnumber:		.word 0
-songcount:		.word 0
-emuflags:		.word 0
-fpsvalue:		.word 0
+waitCountIn:		.byte 0
+waitMaskIn:			.byte 0
+waitCountOut:		.byte 0
+waitMaskOut:		.byte 0
 
+AGBjoypad:		.long 0
+EMUjoypad:		.long 0
+fiveminutes:	.long 5*60*60
+sleeptime:		.long 5*60*60
+dontstop:		.long 0
+novblankwait:	.long 0
+songnumber:		.long 0
+songcount:		.long 0
+emuflags:		.long 0
+fpsvalue:		.long 0
+
+;@----------------------------------------------------------------------------
+#ifdef NDS
+	.section .dtcm, "ax", %progbits			;@ For the NDS
+#elif GBA
+	.section .iwram, "ax", %progbits		;@ For the GBA
+#else
+	.section .text
+#endif
+;@----------------------------------------------------------------------------
+wram_global_base:
+m6502_0:
+	.space m6502Size
+;@----------------------------------------------------------------------------

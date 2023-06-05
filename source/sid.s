@@ -1,5 +1,5 @@
 #include "equates.h"
-#include "ARM6502/M6502.h"
+#include "ARM6502/M6502.i"
 #include "memory.h"
 
 	.global SID_reset
@@ -60,7 +60,7 @@
 #define PCMWAVSIZE				528
 
 
-	.text sid_routines
+	.section .text
 ;@----------------------------------------------------------------------------
 
 ;@ r0 = .
@@ -321,8 +321,7 @@ mix_channels:
 
 ;@----------------------------------------------------------------------------
 
-// AREA rom_code, CODE, READONLY ;-- - - - - - - - - - - - - - - - - - - - - -
-//	.text sid_routines
+//	.section .text
 
 ;@----------------------------------------------------------------------------
 //SID_init
@@ -375,14 +374,14 @@ SID_reset:
 
 ;@----------------------------------------------------------------------------
 Attack_len:
-	.word 0x04000000,0x01000000,0x00800000,0x00500000,0x00380000,0x00250000,0x001E0000,0x001A0000
-	.word 0x00140000,0x00080000,0x00040000,0x00030000,0x00020000,0x0000B200,0x00006B00,0x00004000
+	.long 0x04000000,0x01000000,0x00800000,0x00500000,0x00380000,0x00250000,0x001E0000,0x001A0000
+	.long 0x00140000,0x00080000,0x00040000,0x00030000,0x00020000,0x0000B200,0x00006B00,0x00004000
 Decay_len:
-	.word 0x01400000,0x00500000,0x00280000,0x001A0000,0x00126564,0x000C7BA8,0x000A47B8,0x0008BCF4
-	.word 0x0006FD90,0x0002CBD0,0x000165E0,0x0000DFB0,0x0000AAA8,0x00003B54,0x000023A8,0x00001554
+	.long 0x01400000,0x00500000,0x00280000,0x001A0000,0x00126564,0x000C7BA8,0x000A47B8,0x0008BCF4
+	.long 0x0006FD90,0x0002CBD0,0x000165E0,0x0000DFB0,0x0000AAA8,0x00003B54,0x000023A8,0x00001554
 Release_len:
-	.word 0x01400000,0x00500000,0x00280000,0x001A0000,0x00126564,0x000C7BA8,0x000A47B8,0x0008BCF4
-	.word 0x0006FD90,0x0002CBD0,0x000165E0,0x0000DFB0,0x0000AAA8,0x00003B54,0x000023A8,0x00001554
+	.long 0x01400000,0x00500000,0x00280000,0x001A0000,0x00126564,0x000C7BA8,0x000A47B8,0x0008BCF4
+	.long 0x0006FD90,0x0002CBD0,0x000165E0,0x0000DFB0,0x0000AAA8,0x00003B54,0x000023A8,0x00001554
 ;@----------------------------------------------------------------------------
 SID_StartMixer:
 ;@----------------------------------------------------------------------------
@@ -649,31 +648,30 @@ osc3rnd:		.byte 0
 env3out:		.byte 0
 unused:			.byte 0,0,0
 
-ch1counter:		.word 0
-ch2counter:		.word 0
-ch3counter:		.word 0
-ch1envelope:	.word 0
-ch2envelope:	.word 0
-ch3envelope:	.word 0
-ch1noise:		.word NSEED
-ch2noise:		.word NSEED
-ch3noise:		.word NSEED
-ch3noise_r:		.word NSEED
+ch1counter:		.long 0
+ch2counter:		.long 0
+ch3counter:		.long 0
+ch1envelope:	.long 0
+ch2envelope:	.long 0
+ch3envelope:	.long 0
+ch1noise:		.long NSEED
+ch2noise:		.long NSEED
+ch3noise:		.long NSEED
+ch3noise_r:		.long NSEED
 
 
+mixlength:		.long PCMWAVSIZE	;@ Mixlength (528=high, 304=low)
+sidptr:			.long SIDWAV
+pcmptr:			.long SIDWAV
+;@----------------------------------------------------------------------------
 
-mixlength:		.word PCMWAVSIZE	;@ Mixlength (528=high, 304=low)
-sidptr:			.word SIDWAV
-pcmptr:			.word SIDWAV
-;----------------------------------------------------------------------------
-
-mixrate:			.word 532		;@ Mixrate (532=high, 924=low), (mixrate=0x1000000/mixer_frequency)
-freqconvPAL:		.word 0x70788	;@ Frequency conversion (0x70788=high, 0xC3581=low) (3546893/mixer_frequency)*4096
-freqconvNTSC:		.word 0x71819	;@ Frequency conversion (0x71819=high, 0xC5247=low) (3579545/mixer_frequency)*4096
-freqconv:			.word 0
-soundmode:			.word 1		;@ Soundmode (OFF/ON)
+mixrate:			.long 532		;@ Mixrate (532=high, 924=low), (mixrate=0x1000000/mixer_frequency)
+freqconvPAL:		.long 0x70788	;@ Frequency conversion (0x70788=high, 0xC3581=low) (3546893/mixer_frequency)*4096
+freqconvNTSC:		.long 0x71819	;@ Frequency conversion (0x71819=high, 0xC5247=low) (3579545/mixer_frequency)*4096
+freqconv:			.long 0
+soundmode:			.long 1		;@ Soundmode (OFF/ON)
 
 	.bss
 SIDWAV:
 	.space PCMWAVSIZE*6			;@ 16bit 3ch.
-;----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------

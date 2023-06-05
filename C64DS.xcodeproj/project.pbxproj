@@ -63,6 +63,7 @@
 		9CA4422B2A2D1E1700259966 /* Emubase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Emubase.h; sourceTree = "<group>"; };
 		9CA4422C2A2D20F400259966 /* Sound.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = Sound.s; sourceTree = "<group>"; };
 		9CA4422D2A2D23A800259966 /* cpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpu.h; sourceTree = "<group>"; };
+		9CA4422E2A2DE63000259966 /* io.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = io.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -109,6 +110,7 @@
 				9CA441E72A2CFB3600259966 /* machine.s */,
 				9CA4422D2A2D23A800259966 /* cpu.h */,
 				9CA4420C2A2CFB3600259966 /* cpu.s */,
+				9CA4422E2A2DE63000259966 /* io.h */,
 				9CA4420D2A2CFB3600259966 /* io.s */,
 				9CA441E32A2CFB3600259966 /* Sound.h */,
 				9CA4422C2A2D20F400259966 /* Sound.s */,

@@ -1,8 +1,7 @@
 #include "equates.h"
 #include "memory.h"
-#include "sid.h"
-#include "cia_tod.h"
-	
+#include "ARM6502/M6502.i"
+
 	.global IO_reset
 	.global IO_R
 	.global IO_W
@@ -10,19 +9,24 @@
 	.global CIA2_TOD_Base
 	.global ManageInput
 	.global CalibrateTouch
+
+	.global EMUinput
+	.global joyCfg
 	.global mytouch_x
 	.global mytouch_y
 	.global mytouch_press
 	.global ntr_pad_current
 	.global ntr_pad_down
 	.global ntr_pad_up
+	.global keyb_pos
 
-
-	.text io_routines
+	.section .text
+	.align 2
 ;@----------------------------------------------------------------------------
 UncompressLZ77:	;@ r0=src, r1=dst.
 ;@----------------------------------------------------------------------------
-	b MI_UncompressLZ16
+	bx lr
+//	b MI_UncompressLZ16
 ;@----------------------------------------------------------------------------
 IO_reset:
 ;@----------------------------------------------------------------------------
@@ -46,31 +50,31 @@ cialoop:
 	bx lr
 ;@----------------------------------------------------------------------------
 IO_R:		;@ I/O read, 0xD000-0xDFFF
-;----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
 //	mov r11,r11
 	cmp addy,#0xD000
 	bmi ram_R
 	and r1,addy,#0xF00
 	ldr pc,[pc,r1,lsr#6]
 ;@---------------------------
-	.word 0
+	.long 0
 //io_read_tbl
-	.word VIC_R				;@ 0xD000
-	.word VIC_R				;@ 0xD100
-	.word VIC_R				;@ 0xD200
-	.word VIC_R				;@ 0xD300
-	.word SID_R				;@ 0xD400
-	.word SID_R				;@ 0xD500
-	.word SID_R				;@ 0xD600
-	.word SID_R				;@ 0xD700
-	.word VIC_ram_R			;@ 0xD800
-	.word VIC_ram_R			;@ 0xD800
-	.word VIC_ram_R			;@ 0xDA00
-	.word VIC_ram_R			;@ 0xDB00
-	.word CIA1_R			;@ 0xDC00
-	.word CIA2_R			;@ 0xDD00
-	.word IO_RES0_R			;@ 0xDE00
-	.word IO_RES1_R			;@ 0xDF00
+	.long VIC_R				;@ 0xD000
+	.long VIC_R				;@ 0xD100
+	.long VIC_R				;@ 0xD200
+	.long VIC_R				;@ 0xD300
+	.long SID_R				;@ 0xD400
+	.long SID_R				;@ 0xD500
+	.long SID_R				;@ 0xD600
+	.long SID_R				;@ 0xD700
+	.long VIC_ram_R			;@ 0xD800
+	.long VIC_ram_R			;@ 0xD800
+	.long VIC_ram_R			;@ 0xDA00
+	.long VIC_ram_R			;@ 0xDB00
+	.long CIA1_R			;@ 0xDC00
+	.long CIA2_R			;@ 0xDD00
+	.long IO_RES0_R			;@ 0xDE00
+	.long IO_RES1_R			;@ 0xDF00
 
 ;@----------------------------------------------------------------------------
 IO_W:		;@ I/O write, 0xD000-0xDFFF
@@ -81,24 +85,24 @@ IO_W:		;@ I/O write, 0xD000-0xDFFF
 	and r1,addy,#0xF00
 	ldr pc,[pc,r1,lsr#6]
 ;@---------------------------
-	.word 0
+	.long 0
 //io_read_tbl
-	.word VIC_W				;@ 0xD000
-	.word VIC_W				;@ 0xD100
-	.word VIC_W				;@ 0xD200
-	.word VIC_W				;@ 0xD#00
-	.word SID_W				;@ 0xD400
-	.word SID_W				;@ 0xD500
-	.word SID_W				;@ 0xD600
-	.word SID_W				;@ 0xD700
-	.word VIC_ram_W			;@ 0xD800
-	.word VIC_ram_W			;@ 0xD900
-	.word VIC_ram_W			;@ 0xDA00
-	.word VIC_ram_W			;@ 0xDB00
-	.word CIA1_W			;@ 0xDC00
-	.word CIA2_W			;@ 0xDD00
-	.word IO_RES0_W			;@ 0xDE00
-	.word IO_RES1_W			;@ 0xDF00
+	.long VIC_W				;@ 0xD000
+	.long VIC_W				;@ 0xD100
+	.long VIC_W				;@ 0xD200
+	.long VIC_W				;@ 0xD#00
+	.long SID_W				;@ 0xD400
+	.long SID_W				;@ 0xD500
+	.long SID_W				;@ 0xD600
+	.long SID_W				;@ 0xD700
+	.long VIC_ram_W			;@ 0xD800
+	.long VIC_ram_W			;@ 0xD900
+	.long VIC_ram_W			;@ 0xDA00
+	.long VIC_ram_W			;@ 0xDB00
+	.long CIA1_W			;@ 0xDC00
+	.long CIA2_W			;@ 0xDD00
+	.long IO_RES0_W			;@ 0xDE00
+	.long IO_RES1_W			;@ 0xDF00
 
 ;@----------------------------------------------------------------------------
 CIA1_R:
@@ -106,24 +110,24 @@ CIA1_R:
 	and r1,addy,#0xF
 	ldr pc,[pc,r1,lsl#2]
 ;@---------------------------
-	.word 0
+	.long 0
 //cia1_read_tbl
-	.word CIA1_PortA_R		;@ 0xDC00
-	.word CIA1_PortB_R		;@ 0xDC01
-	.word CIA1_empty_R		;@ 0xDC02
-	.word CIA1_empty_R		;@ 0xDC03
-	.word CIA1_TimerA_L_R	;@ 0xDC04
-	.word CIA1_TimerA_H_R	;@ 0xDC05
-	.word CIA1_TimerB_L_R	;@ 0xDC06
-	.word CIA1_TimerB_H_R	;@ 0xDC07
-	.word CIA1_TOD_F_R		;@ 0xDD08
-	.word CIA1_TOD_S_R		;@ 0xDD09
-	.word CIA1_TOD_M_R		;@ 0xDD0A
-	.word CIA1_TOD_H_R		;@ 0xDD0B
-	.word CIA1_empty_R		;@ 0xDC0C
-	.word CIA1_IRQCTRL_R	;@ 0xDC0D
-	.word CIA1_empty_R		;@ 0xDC0E
-	.word CIA1_empty_R		;@ 0xDC0F
+	.long CIA1_PortA_R		;@ 0xDC00
+	.long CIA1_PortB_R		;@ 0xDC01
+	.long CIA1_empty_R		;@ 0xDC02
+	.long CIA1_empty_R		;@ 0xDC03
+	.long CIA1_TimerA_L_R	;@ 0xDC04
+	.long CIA1_TimerA_H_R	;@ 0xDC05
+	.long CIA1_TimerB_L_R	;@ 0xDC06
+	.long CIA1_TimerB_H_R	;@ 0xDC07
+	.long CIA1_TOD_F_R		;@ 0xDD08
+	.long CIA1_TOD_S_R		;@ 0xDD09
+	.long CIA1_TOD_M_R		;@ 0xDD0A
+	.long CIA1_TOD_H_R		;@ 0xDD0B
+	.long CIA1_empty_R		;@ 0xDC0C
+	.long CIA1_IRQCTRL_R	;@ 0xDC0D
+	.long CIA1_empty_R		;@ 0xDC0E
+	.long CIA1_empty_R		;@ 0xDC0F
 CIA1_empty_R:
 	add r2,r10,#cia_base_offset
 	ldrb r0,[r2,r1]
@@ -135,24 +139,24 @@ CIA1_W:
 	and r1,addy,#0xF
 	ldr pc,[pc,r1,lsl#2]
 ;@---------------------------
-	.word 0
+	.long 0
 //cia1_write_tbl
-	.word CIA1_empty_W		;@ 0xDC00
-	.word CIA1_empty_W		;@ 0xDC01
-	.word CIA1_empty_W		;@ 0xDC02
-	.word CIA1_empty_W		;@ 0xDC03
-	.word CIA1_empty_W		;@ 0xDC04
-	.word CIA1_TimerA_H_W	;@ 0xDC05
-	.word CIA1_empty_W		;@ 0xDC06
-	.word CIA1_TimerB_H_W	;@ 0xDC07
-	.word CIA1_TOD_F_W		;@ 0xDC08
-	.word CIA1_TOD_S_W		;@ 0xDC09
-	.word CIA1_TOD_M_W		;@ 0xDC0A
-	.word CIA1_TOD_H_W		;@ 0xDC0B
-	.word CIA1_empty_W		;@ 0xDC0C
-	.word CIA1_IRQCTRL_W	;@ 0xDC0D
-	.word CIA1_CTRLA_W		;@ 0xDC0E
-	.word CIA1_CTRLB_W		;@ 0xDC0F
+	.long CIA1_empty_W		;@ 0xDC00
+	.long CIA1_empty_W		;@ 0xDC01
+	.long CIA1_empty_W		;@ 0xDC02
+	.long CIA1_empty_W		;@ 0xDC03
+	.long CIA1_empty_W		;@ 0xDC04
+	.long CIA1_TimerA_H_W	;@ 0xDC05
+	.long CIA1_empty_W		;@ 0xDC06
+	.long CIA1_TimerB_H_W	;@ 0xDC07
+	.long CIA1_TOD_F_W		;@ 0xDC08
+	.long CIA1_TOD_S_W		;@ 0xDC09
+	.long CIA1_TOD_M_W		;@ 0xDC0A
+	.long CIA1_TOD_H_W		;@ 0xDC0B
+	.long CIA1_empty_W		;@ 0xDC0C
+	.long CIA1_IRQCTRL_W	;@ 0xDC0D
+	.long CIA1_CTRLA_W		;@ 0xDC0E
+	.long CIA1_CTRLB_W		;@ 0xDC0F
 CIA1_empty_W:
 	add r2,r10,#cia_base_offset
 	strb r0,[r2,r1]
@@ -163,24 +167,24 @@ CIA2_R:
 	and r1,addy,#0xF
 	ldr pc,[pc,r1,lsl#2]
 ;@---------------------------
-	.word 0xC1A20
+	.long 0xC1A20
 //cia2_read_tbl
-	.word CIA2_empty_R		;@ 0xDD00
-	.word CIA2_empty_R		;@ 0xDD01
-	.word CIA2_empty_R		;@ 0xDD02
-	.word CIA2_empty_R		;@ 0xDD03
-	.word CIA2_TimerA_L_R	;@ 0xDD04
-	.word CIA2_TimerA_H_R	;@ 0xDD05
-	.word CIA2_TimerB_L_R	;@ 0xDD06
-	.word CIA2_TimerB_H_R	;@ 0xDD07
-	.word CIA2_TOD_F_R		;@ 0xDD08
-	.word CIA2_TOD_S_R		;@ 0xDD09
-	.word CIA2_TOD_M_R		;@ 0xDD0A
-	.word CIA2_TOD_H_R		;@ 0xDD0B
-	.word CIA2_empty_R		;@ 0xDD0C
-	.word CIA2_empty_R		;@ 0xDD0D
-	.word CIA2_empty_R		;@ 0xDD0E
-	.word CIA2_empty_R		;@ 0xDD0F
+	.long CIA2_empty_R		;@ 0xDD00
+	.long CIA2_empty_R		;@ 0xDD01
+	.long CIA2_empty_R		;@ 0xDD02
+	.long CIA2_empty_R		;@ 0xDD03
+	.long CIA2_TimerA_L_R	;@ 0xDD04
+	.long CIA2_TimerA_H_R	;@ 0xDD05
+	.long CIA2_TimerB_L_R	;@ 0xDD06
+	.long CIA2_TimerB_H_R	;@ 0xDD07
+	.long CIA2_TOD_F_R		;@ 0xDD08
+	.long CIA2_TOD_S_R		;@ 0xDD09
+	.long CIA2_TOD_M_R		;@ 0xDD0A
+	.long CIA2_TOD_H_R		;@ 0xDD0B
+	.long CIA2_empty_R		;@ 0xDD0C
+	.long CIA2_empty_R		;@ 0xDD0D
+	.long CIA2_empty_R		;@ 0xDD0E
+	.long CIA2_empty_R		;@ 0xDD0F
 CIA2_empty_R:
 	ldr r2,=CIA2State
 	ldrb r0,[r2,r1]
@@ -191,24 +195,24 @@ CIA2_W:
 	and r1,addy,#0xF
 	ldr pc,[pc,r1,lsl#2]
 ;@---------------------------
-	.word 0xC1A21
+	.long 0xC1A21
 //cia2_write_tbl
-	.word CIA2_PORTA_W		;@ 0xDD00
-	.word CIA2_empty_W		;@ 0xDD01
-	.word CIA2_empty_W		;@ 0xDD02
-	.word CIA2_empty_W		;@ 0xDD03
-	.word CIA2_empty_W		;@ 0xDD04
-	.word CIA2_empty_W		;@ 0xDD05
-	.word CIA2_empty_W		;@ 0xDD06
-	.word CIA2_empty_W		;@ 0xDD07
-	.word CIA2_TOD_F_W		;@ 0xDD08
-	.word CIA2_TOD_S_W		;@ 0xDD09
-	.word CIA2_TOD_M_W		;@ 0xDD0A
-	.word CIA2_TOD_H_W		;@ 0xDD0B
-	.word CIA2_empty_W		;@ 0xDD0C
-	.word CIA2_empty_W		;@ 0xDD0D
-	.word CIA2_empty_W		;@ 0xDD0E
-	.word CIA2_empty_W		;@ 0xDD0F
+	.long CIA2_PORTA_W		;@ 0xDD00
+	.long CIA2_empty_W		;@ 0xDD01
+	.long CIA2_empty_W		;@ 0xDD02
+	.long CIA2_empty_W		;@ 0xDD03
+	.long CIA2_empty_W		;@ 0xDD04
+	.long CIA2_empty_W		;@ 0xDD05
+	.long CIA2_empty_W		;@ 0xDD06
+	.long CIA2_empty_W		;@ 0xDD07
+	.long CIA2_TOD_F_W		;@ 0xDD08
+	.long CIA2_TOD_S_W		;@ 0xDD09
+	.long CIA2_TOD_M_W		;@ 0xDD0A
+	.long CIA2_TOD_H_W		;@ 0xDD0B
+	.long CIA2_empty_W		;@ 0xDD0C
+	.long CIA2_empty_W		;@ 0xDD0D
+	.long CIA2_empty_W		;@ 0xDD0E
+	.long CIA2_empty_W		;@ 0xDD0F
 CIA2_empty_W:
 	ldr r2,=CIA2State
 	strb r0,[r2,r1]
@@ -229,7 +233,7 @@ CIA1_TimerA_H_W:			;@ 0xDC05
 	bmi CIA1_Reload_TA
 	bx lr
 ;@----------------------------------------------------------------------------
-CIA1_TimerB_H_W				;@ 0xDC07
+CIA1_TimerB_H_W:			;@ 0xDC07
 ;@----------------------------------------------------------------------------
 	strb r0,[r10,#cia1timerbh]
 	ldr r1,[r10,#timer1b]
@@ -246,8 +250,8 @@ CIA1_IRQCTRL_W:				;@ 0xDC0D
 	biceq r1,r1,r2
 	orrne r1,r1,r2
 	strb r1,[r10,#cia1irqctrl]
-	b PrepareIRQCheck
-//	bx lr
+//	b PrepareIRQCheck
+	bx lr
 ;@----------------------------------------------------------------------------
 CIA1_CTRLA_W:				;@ 0xDC0E
 ;@----------------------------------------------------------------------------
@@ -491,24 +495,30 @@ SetC64Key:			;@ r0=x,r1=y,r2=touch.
 	bx lr
 
 ;@----------------------------------------------------------------------------
+joyCfg: .long 0x00ff01ff	;@ byte0=auto mask, byte1=(saves R), byte2=R auto mask
+							;@ bit 31=single/multi, 30,29=1P/2P, 27=(multi) link active, 24=reset signal received
+EMUinput:			;@ This label here for main.c to use
+	.long 0			;@ EMUjoypad (this is what Emu sees)
 
 ntr_pad_current:
-	.word 0
+	.long 0
 ntr_pad_down:
-	.word 0
+	.long 0
 ntr_pad_up:
-	.word 0
+	.long 0
 mytouch_x:
-	.word 0
+	.long 0
 mytouch_y:
-	.word 0
+	.long 0
 mytouch_press:
-	.word 0
+	.long 0
+keyb_pos:
+	.long 0
 
 joy0state:
-	.word 0
+	.long 0
 joy1state:
-	.word 0
+	.long 0
 
 rlud2udlr:	.byte 0x00,0x08,0x04,0x0C, 0x01,0x09,0x05,0x0D, 0x02,0x0A,0x06,0x0E, 0x03,0x0B,0x07,0x0F
 
@@ -593,19 +603,25 @@ VKB_Array:
 	.align 4
 
 Keyb_trans:	;@ Which row and bit should be affected.
-	.hword 0x0001,0x0002,0x0004,0x0008,0x0010,0x0020,0x0040,0x0080
-	.hword 0x0101,0x0102,0x0104,0x0108,0x0110,0x0120,0x0140,0x0180
-	.hword 0x0201,0x0202,0x0204,0x0208,0x0210,0x0220,0x0240,0x0280
-	.hword 0x0301,0x0302,0x0304,0x0308,0x0310,0x0320,0x0340,0x0380
-	.hword 0x0401,0x0402,0x0404,0x0408,0x0410,0x0420,0x0440,0x0480
-	.hword 0x0501,0x0502,0x0504,0x0508,0x0510,0x0520,0x0540,0x0580
-	.hword 0x0601,0x0602,0x0604,0x0608,0x0610,0x0620,0x0640,0x0680
-	.hword 0x0701,0x0702,0x0704,0x0708,0x0710,0x0720,0x0740,0x0780
-	.hword 0x0000,0x0880,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
+	.short 0x0001,0x0002,0x0004,0x0008,0x0010,0x0020,0x0040,0x0080
+	.short 0x0101,0x0102,0x0104,0x0108,0x0110,0x0120,0x0140,0x0180
+	.short 0x0201,0x0202,0x0204,0x0208,0x0210,0x0220,0x0240,0x0280
+	.short 0x0301,0x0302,0x0304,0x0308,0x0310,0x0320,0x0340,0x0380
+	.short 0x0401,0x0402,0x0404,0x0408,0x0410,0x0420,0x0440,0x0480
+	.short 0x0501,0x0502,0x0504,0x0508,0x0510,0x0520,0x0540,0x0580
+	.short 0x0601,0x0602,0x0604,0x0608,0x0610,0x0620,0x0640,0x0680
+	.short 0x0701,0x0702,0x0704,0x0708,0x0710,0x0720,0x0740,0x0780
+	.short 0x0000,0x0880,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000
 
 ;@----------------------------------------------------------------------------
 
-	.section .dtcm
+#ifdef NDS
+	.section .dtcm, "ax", %progbits				;@ For the NDS
+#elif GBA
+	.section .iwram, "ax", %progbits			;@ For the GBA
+#else
+	.section .text
+#endif
 					;@ !!! Something MUST be referenced here, otherwise the compiler scraps it !!!
 CIA1State:
 	.byte 0 ;@ cia1porta
@@ -625,8 +641,8 @@ CIA1_TOD_Base:
 	.byte 0 ;@ cia1irqctrl
 	.byte 0 ;@ cia1ctrla
 	.byte 0 ;@ cia1ctrlb
-	.word 0 ;@ timer1a
-	.word 0 ;@ timer1b
+	.long 0 ;@ timer1a
+	.long 0 ;@ timer1b
 CIA2State:
 	.byte 0 ;@ cia2porta
 	.byte 0 ;@ cia2portb
@@ -645,8 +661,8 @@ CIA2_TOD_Base:
 	.byte 0 ;@ cia2irqctrl
 	.byte 0 ;@ cia2ctrla
 	.byte 0 ;@ cia2ctrlb
-	.word 0 ;@ timer2a
-	.word 0 ;@ timer2b
+	.long 0 ;@ timer2a
+	.long 0 ;@ timer2b
 
 	.byte 0 ;@ cia1irq
 	.byte 0 ;@ cia2nmi
