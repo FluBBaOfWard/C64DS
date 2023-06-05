@@ -58,7 +58,7 @@ const char *const ctrlTxt[]  = {"1P", "2P"};
 const char *const dispTxt[]  = {"Unscaled", "Scaled"};
 const char *const flickTxt[] = {"No Flicker", "Flicker"};
 
-const char *const machTxt[]  = {"Auto", "WonderSwan", "WonderSwan Color", "SwanCrystal", "Pocket Challenge V2"};
+const char *const machTxt[]  = {"Auto", "C64", "C64GS", "C64EX", "C64NTSC"};
 const char *const bordTxt[]  = {"Black", "Border Color", "None"};
 const char *const palTxt[]   = {"Classic", "Black & White", "Red", "Green", "Blue", "Green-Blue", "Blue-Green", "Puyo Puyo Tsu"};
 const char *const langTxt[]  = {"Japanese", "English"};

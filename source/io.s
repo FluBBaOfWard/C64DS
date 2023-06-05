@@ -622,6 +622,7 @@ Keyb_trans:	;@ Which row and bit should be affected.
 #else
 	.section .text
 #endif
+	.align 2
 					;@ !!! Something MUST be referenced here, otherwise the compiler scraps it !!!
 CIA1State:
 	.byte 0 ;@ cia1porta

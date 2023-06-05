@@ -23,6 +23,7 @@
 	.global obj_base
 
 	.section .text
+	.align 2
 ;@----------------------------------------------------------------------------
 gfxInit:	;@ (called from main.c) only need to call once
 ;@----------------------------------------------------------------------------
@@ -329,6 +330,7 @@ scaleloop:
 
 ;@----------------------------------------------------------------------------
 vblIrqHandler:
+	.type vblIrqHandler STT_FUNC
 ;@----------------------------------------------------------------------------
 	;@ r0 = address of ula memory
 
@@ -419,7 +421,8 @@ loop1:
 	ldr r0,[r0]
 	strh r0,[r12,#REG_BG1VOFS]
 
-	ldmia sp!,{r4-r11,pc}  ;@ Restore registers from stack and return to C code
+	blx scanKeys
+	ldmia sp!,{r4-r11,pc}
 
 ;@----------------------------------------------------------------------------
 gFlicker:		.byte 1
@@ -1563,7 +1566,8 @@ spr_loop3:
 
 
 
-	.bss
+	.section .bss
+	.align 2
 //chr_decode_new			; 16*16*16*16*4
 //	.space 0x40000
 chr_decode:
@@ -1617,7 +1621,14 @@ c64_chr_base:
 c64_bmp_base:
 	.long 0
 
-	.section .dtcm
+#ifdef NDS
+	.section .dtcm, "ax", %progbits				;@ For the NDS
+#elif GBA
+	.section .iwram, "ax", %progbits			;@ For the GBA
+#else
+	.section .text
+#endif
+	.align 2
 					;@ !!! Something MUST be referenced here, otherwise the compiler scraps it !!!
 VICState:
 	.byte 0 ;@ vicspr0x			;0xD000

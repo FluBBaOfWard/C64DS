@@ -12,15 +12,11 @@
 #include "cpu.h"
 #include "Gfx.h"
 #include "io.h"
-#include "sound.h"
-#include "gui.h"
+#include "Sound.h"
 #include "cia_tod.h"
 
 extern void machineReset(void);
 extern void machineRun(void);
-extern u32 mytouch_x;
-extern u32 mytouch_y;
-extern u32 mytouch_press;
 
 //==========================================================================
 
@@ -28,9 +24,6 @@ unsigned char *emu_ram_alloc;
 unsigned char *emu_ram_base;
 
 //==========================================================================
-
-void emulate(void);
-void vhandler(void);
 
 static void checkTimeOut(void);
 static void setupGraphics(void);
@@ -75,7 +68,7 @@ void myVblank(void) {
 //---------------------------------------------------------------------------------
 	vBlankOverflow = true;
 //	DC_FlushRange(EMUPALBUFF, 0x400);
-//	vblIrqHandler();
+	vblIrqHandler();
 	CIA_TOD_Count();
 }
 
@@ -83,13 +76,12 @@ void myVblank(void) {
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
-
 	if (argc > 1) {
 		enableExit = true;
 	}
 	// Allocate C64 ram from the heap
-	emu_ram_alloc = malloc(0x30600);
-	emu_ram_base = emu_ram_alloc + 0x400;
+//	emu_ram_alloc = malloc(0x30600);
+//	emu_ram_base = emu_ram_alloc + 0x400;
 	setupGraphics();
 
 	setupStream();
@@ -97,7 +89,6 @@ int main(int argc, char **argv) {
 	setupGUI();
 	getInput();
 	initSettings();
-
 //	machineInit();
 	// Clear DS VRAM and calculate LUTs.
 //	gfxInit();
@@ -106,8 +97,9 @@ int main(int argc, char **argv) {
 	if ( initFileHelper() ) {
 		loadSettings();
 //		autoLoadGame();
-	} else {
-		drawText("fatInitDefault() failure.",23,0);
+	}
+	else {
+		infoOutput("fatInitDefault() failure.");
 	}
 
 	while (1) {
@@ -115,7 +107,6 @@ int main(int argc, char **argv) {
 		checkTimeOut();
 		guiRunLoop();
 		if (!pauseEmulation) {
-			REG_BLDCNT_SUB = 0;
 //			run();
 		}
 	}
@@ -205,30 +196,31 @@ static void setupGraphics() {
 
 	vramSetBankA(VRAM_A_MAIN_BG);
 	vramSetBankB(VRAM_B_MAIN_BG_0x06020000);
-//	vramSetBankC(VRAM_C_MAIN_BG_0x06040000);
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-//	vramSetBankD(VRAM_D_MAIN_BG_0x06060000);
+	vramSetBankC(VRAM_C_MAIN_BG_0x06040000);
+	vramSetBankD(VRAM_D_MAIN_BG_0x06060000);
 	vramSetBankE(VRAM_E_MAIN_SPRITE);
 	vramSetBankF(VRAM_F_LCD);
 	vramSetBankG(VRAM_G_LCD);
-	vramSetBankH(VRAM_H_LCD);
+	vramSetBankH(VRAM_H_SUB_BG);
 	vramSetBankI(VRAM_I_SUB_SPRITE);
 
 	// Set up the main display
-	videoSetMode(MODE_3_2D
+	videoSetMode(MODE_0_2D
 				 | DISPLAY_BG0_ACTIVE
 				 | DISPLAY_BG1_ACTIVE
 				 | DISPLAY_BG2_ACTIVE
-				 | DISPLAY_BG3_ACTIVE
+				 | DISPLAY_SPR_ACTIVE
+				 | DISPLAY_WIN0_ON
+				 | DISPLAY_WIN1_ON
 				 | DISPLAY_BG_EXT_PALETTE
 				 );
-	REG_BG0CNT = BG_32x32 | BG_MAP_BASE(1) | BG_COLOR_16 | BG_TILE_BASE(4) | BG_PRIORITY(0);
-	REG_BG1CNT = BG_64x32 | BG_MAP_BASE(0) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(2);
-	REG_BG2CNT = BG_64x64 | BG_MAP_BASE(2) | BG_COLOR_16 | BG_TILE_BASE(6) | BG_PRIORITY(0);
-	REG_BG3CNT = BG_RS_64x64 | BG_MAP_BASE(6) | BG_COLOR_16 | BG_TILE_BASE(8) | BG_PRIORITY(1) | BG_WRAP_ON;
+	REG_BG0CNT = BG_32x64 | BG_MAP_BASE(0) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(1);
+	REG_BG1CNT = BG_32x64 | BG_MAP_BASE(2) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(0);
+	// Background 2 for border
+	REG_BG2CNT = BG_32x32 | BG_MAP_BASE(15) | BG_COLOR_256 | BG_TILE_BASE(1) | BG_PRIORITY(2);
 
 	// Set up the sub display
-	videoSetModeSub(MODE_3_2D
+	videoSetModeSub(MODE_0_2D
 					| DISPLAY_BG0_ACTIVE
 					| DISPLAY_BG1_ACTIVE
 					);
@@ -245,7 +237,7 @@ static void setupGraphics() {
 }
 
 void setupMenuPalette() {
-	convertPalette(EMUPALBUFF+0x200, guiPalette, sizeof(guiPalette)/3, gGammaValue);
+	convertPalette(BG_PALETTE_SUB, guiPalette, sizeof(guiPalette)/3, gGammaValue);
 }
 
 //---------------------------------------------------------------------------------

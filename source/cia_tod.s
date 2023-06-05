@@ -19,6 +19,7 @@
 	.global CIA_TOD_Count
 
 	.section .text
+	.align 2
 ;@----------------------------------------------------------------------------
 CIA_TOD_Init:
 	.type CIA_TOD_Init STT_FUNC

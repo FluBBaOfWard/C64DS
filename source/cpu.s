@@ -14,6 +14,7 @@
 	.global wram_global_base
 
 	.section .text
+	.align 2
 ;@----------------------------------------------------------------------------
 run:						;@ Return after X frame(s)
 	.type   run STT_FUNC
@@ -181,6 +182,7 @@ fpsvalue:		.long 0
 #else
 	.section .text
 #endif
+	.align 2
 ;@----------------------------------------------------------------------------
 wram_global_base:
 m6502_0:
