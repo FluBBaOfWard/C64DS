@@ -553,7 +553,7 @@ _58:	;@ CLI
 	bl PrepareIRQCheck
 //	ldr r0,CliFixAdr			;@ Check IRQ lines after next instructions
 //	str r0,[r10,#nexttimeout]
-//	str cycles,[r10,#oldcycles]	;@ Save old cycles so we can use them later on.
+//	str cycles,[r10,#m6502OldCycles]	;@ Save old cycles so we can use them later on.
 //	clearcycles					;@ Clear cycles, save cpu bits
 
 	fetch 0
@@ -1522,7 +1522,7 @@ _FF:	;@ ISB $nnnn,X
 ;@----------------------------------------------------------------------------
 CheckIRQs:
 ;@----------------------------------------------------------------------------
-	ldrb r0,[r10,#irqPending]
+	ldrb r0,[r10,#m6502IrqPending]
 	and r0,r0,#0x04				;@ Save Reset vector
 	ldrb r2,[r10,#cia1irqctrl]
 	ldrb r1,[r10,#cia1irq]
@@ -1532,7 +1532,7 @@ CheckIRQs:
 	ldrb r1,[r10,#vicirqflag]
 	ands r2,r2,r1
 	orrne r0,r0,#0x01			;@ Normal interrupt (VIC)
-//	strb r0,[r10,#irqPending]
+//	strb r0,[r10,#m6502IrqPending]
 
 	tst cycles,#CYC_I
 	bicne r0,r0,#1
@@ -1546,11 +1546,11 @@ whichirq:
 	tst r0,#4
 	bicne r0,r0,#4
 	ldrne r12,=RST_VECTOR		;@ Reset Vector
-	strneb r0,[r10,#irqPending]
+	strneb r0,[r10,#m6502IrqPending]
 	bne irq6502
 	tst r0,#2
 	bicne r0,r0,#2
-	strneb r0,[r10,#irqPending]
+	strneb r0,[r10,#m6502IrqPending]
 	ldrne r12,=NMI_VECTOR		;@ NMI
 	bne irq6502
 	tst r0,#1
@@ -1581,7 +1581,7 @@ irq_cont:
 ;@----------------------------------------------------------------------------
 CLI_fix:	;@ Cli should be delayed by 1 instruction.
 ;@----------------------------------------------------------------------------
-	ldr r0,[r10,#oldcycles]
+	ldr r0,[r10,#m6502OldCycles]
 	bic r0,r0,#CYC_MASK			;@ Don't add any cpu bits.
 	add cycles,cycles,r0
 	ldr r0,[r10,#nexttimeout_]
@@ -1594,7 +1594,7 @@ PrepareIRQCheck:
 ;@----------------------------------------------------------------------------
 	adr r0,CLI_fix				;@ Check IRQ lines after next instructions
 	str r0,[r10,#nexttimeout]
-	str cycles,[r10,#oldcycles]	;@ Save old cycles so we can use them later on.
+	str cycles,[r10,#m6502OldCycles]	;@ Save old cycles so we can use them later on.
 	clearcycles					;@ Clear cycles, save cpu bits
 	bx lr
 
@@ -1658,7 +1658,7 @@ nr0:
 	mov cycles,#CYC_I			;@ V=0, D=0, C=0, I=1 disable IRQ.
 
 	str m6502_a,[r10,#frame]	;@ Frame count reset
-	str m6502_a,[r10,#irqPending]
+	str m6502_a,[r10,#m6502IrqPending]
 
 	;(clear irq/nmi/res source)...
 
@@ -1739,14 +1739,14 @@ cpustate:
 
 	.long 0 ;@ nexttimeout:  jump here when cycles runs out
 	.long 0 ;@ nexttimeout_:  backup of nexttimeout
-	.long 0 ;@ oldcycles:  backup of cycles
+	.long 0 ;@ m6502OldCycles:  backup of cycles
 	.long 0 ;@ scanline
 	.long 0 ;@ scanlinehook
 	.long 0 ;@ cyclesperscanline (63*CYCLE)
 	.long 0 ;@ lastscanline (311)
 frametotal:		;@ let ui.c see frame count for savestates
 	.long 0 ;@ frame
-	.long 0 ;@ irqPending
+	.long 0 ;@ m6502IrqPending
 	.long 0 ;@ hackflags
 
 ;@----------------------------------------------------------------------------

@@ -16,24 +16,9 @@ DEBUGSCREEN		= NTR_VRAM+0x3800
 
 ;@----------------------------------------------------------------------------
 
-#define opz 0
-#define readmem_tbl		256*4
-#define writemem_tbl	264*4
-#define memmap_tbl		272*4
-#define mapperdata		280*4
-#define cpuregs			282*4
-#define m6502_s			289*4
-#define lastbank		290*4
-#define nexttimeout		291*4
-#define nexttimeout_	292*4
-#define oldcycles		293*4
 #define scanline		294*4
-#define scanlinehook	295*4
-#define cyclesperscanline 296*4
 #define lastscanline	297*4
-#define hackflags		298*4
-#define frame			299*4
-#define irqPending		300*4
+//#define irqPending		300*4
 
 			;@ gfx.s
 #define vic_base_offset 0x4C0

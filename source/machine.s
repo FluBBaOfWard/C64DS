@@ -17,6 +17,7 @@
 	.align 2
 ;@----------------------------------------------------------------------------
 machineReset:
+	.type   machineReset STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
@@ -63,7 +64,7 @@ Mem_reset:
 	ldr r8,=ram_W
 	mov r0,#0
 
-tbloop1:
+tbLoop1:
 	and r1,r0,r2
 	add r1,m6502zpage,r1,lsl#13
 	str r1,[r4,r0,lsl#2]
@@ -71,8 +72,7 @@ tbloop1:
 	str r8,[r6,r0,lsl#2]
 	add r0,r0,#1
 	cmp r0,#0x08
-	bne tbloop1
-
+	bne tbLoop1
 
 	ldr r7,=chargen_R
 	mov r0,#0x0C			;@ Chargen
@@ -138,14 +138,14 @@ MEMMAPTBL_:	.space 16*4
 ;@----------------------------------------------------------------------------
 HuMapper_:	;@ Rom paging..
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r3-r7}
+	stmfd sp!,{r3-r7,lr}
 	ldr r6,=MEMMAPTBL_
 	ldr r2,[r6,r1,lsl#2]!
 	ldr r3,[r6,#-64]		;@ RDMEMTBL_
 	ldr r4,[r6,#-128]		;@ WRMEMTBL_
 
 wr_tbl:
-	add r6,r10,#readmem_tbl
+	add r6,r10,#m6502MemTbl
 	tst r0,#0xFF
 	bne memaps				;@ Safety
 	b flush
@@ -156,20 +156,20 @@ memap2:
 memaps:
 	movs r0,r0,lsr#1
 	bcc memapl				;@ C=0
-	strcs r3,[r6],#4		;@ readmem_tbl
-	strcs r4,[r6,#28]		;@ writemem_tb
-	strcs r2,[r6,#60]		;@ memmap_tbl
+	strcs r2,[r6],#4		;@ m6502MemTbl
+	strcs r3,[r6,#28]		;@ m6502ReadTbl
+	strcs r4,[r6,#60]		;@ m6502WriteTbl
 	bne memap2
 
 ;@------------------------------------------
-flush:		;@ Update cpu_pc & lastbank
+flush:		;@ Update cpu_pc & LastBank
 ;@------------------------------------------
-	ldr r1,[r10,#lastbank]
+	ldr r1,[m6502ptr,#m6502LastBank]
 	sub m6502pc,m6502pc,r1
 	encodePC
 
-	ldmfd sp!,{r3-r7}
-	mov pc,lr
+	ldmfd sp!,{r3-r7,lr}
+	bx lr
 ;@----------------------------------------------------------------------------
 BankSwitch_R:
 ;@----------------------------------------------------------------------------
@@ -238,8 +238,8 @@ setPort:
 	mov r0,#0x40		;@ Bank 0xC000.
 	bl HuMapper_
 
-//	ldr r0,[r10,#lastbank]
-//	sub m6502_pc,m6502_pc,r0
+//	ldr r0,[m6502ptr,#m6502LastBank]
+//	sub m6502pc,m6502pc,r0
 //	encodePC
 
 	ldmfd sp!,{r0,r3,pc}

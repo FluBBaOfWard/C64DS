@@ -26,6 +26,7 @@
 	.align 2
 ;@----------------------------------------------------------------------------
 gfxInit:	;@ (called from main.c) only need to call once
+	.type gfxInit STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
@@ -171,7 +172,7 @@ ppi4:
 ;@----------------------------------------------------------------------------
 gfxReset:	;@ Called with CPU reset
 ;@----------------------------------------------------------------------------
-	str lr,[sp,#-4]!
+	stmfd sp!,{lr}
 
 //	mov r1,#0
 //	str r1,windowtop
@@ -214,7 +215,7 @@ gfxReset:	;@ Called with CPU reset
 //	bl InitBGTiles
 	bl SpriteScaleInit
 	bl paletteinit	;@ do palette mapping
-	ldr pc,[sp],#4
+	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
 BorderInit:
@@ -749,7 +750,8 @@ newframe:	;@ Called before line 0	(r0-r9 safe to use)
 	mov r0,#-1				;@ Rambo checks for IRQ on line 0
 	str r0,[r10,#scanline]	;@ Reset scanline count
 
-	ldr r0,[r10,#frame]
+	ldr r0,=frameTotal
+	ldr r0,[r0]
 	and r0,r0,#1
 	mov r0,r0,lsl#7
 	orr r0,r0,r0,lsl#8

@@ -23,11 +23,6 @@
 	.section .text
 	.align 2
 ;@----------------------------------------------------------------------------
-UncompressLZ77:	;@ r0=src, r1=dst.
-;@----------------------------------------------------------------------------
-	bx lr
-//	b MI_UncompressLZ16
-;@----------------------------------------------------------------------------
 IO_reset:
 ;@----------------------------------------------------------------------------
 	mov r0,#0
@@ -53,20 +48,19 @@ IO_R:		;@ I/O read, 0xD000-0xDFFF
 ;@----------------------------------------------------------------------------
 //	mov r11,r11
 	cmp addy,#0xD000
-	bmi ram_R
-	and r1,addy,#0xF00
-	ldr pc,[pc,r1,lsr#6]
+	andpl r1,addy,#0xF00
+	ldrpl pc,[pc,r1,lsr#6]
+	b ram_R
 ;@---------------------------
-	.long 0
 //io_read_tbl
 	.long VIC_R				;@ 0xD000
 	.long VIC_R				;@ 0xD100
 	.long VIC_R				;@ 0xD200
 	.long VIC_R				;@ 0xD300
-	.long SID_R				;@ 0xD400
-	.long SID_R				;@ 0xD500
-	.long SID_R				;@ 0xD600
-	.long SID_R				;@ 0xD700
+	.long sidRead			;@ 0xD400
+	.long sidRead			;@ 0xD500
+	.long sidRead			;@ 0xD600
+	.long sidRead			;@ 0xD700
 	.long VIC_ram_R			;@ 0xD800
 	.long VIC_ram_R			;@ 0xD800
 	.long VIC_ram_R			;@ 0xDA00
@@ -81,20 +75,19 @@ IO_W:		;@ I/O write, 0xD000-0xDFFF
 ;@----------------------------------------------------------------------------
 //	mov r11,r11
 	cmp addy,#0xD000
-	bmi ram_W
-	and r1,addy,#0xF00
-	ldr pc,[pc,r1,lsr#6]
+	andpl r1,addy,#0xF00
+	ldrpl pc,[pc,r1,lsr#6]
+	b ram_W
 ;@---------------------------
-	.long 0
 //io_read_tbl
 	.long VIC_W				;@ 0xD000
 	.long VIC_W				;@ 0xD100
 	.long VIC_W				;@ 0xD200
-	.long VIC_W				;@ 0xD#00
-	.long SID_W				;@ 0xD400
-	.long SID_W				;@ 0xD500
-	.long SID_W				;@ 0xD600
-	.long SID_W				;@ 0xD700
+	.long VIC_W				;@ 0xD300
+	.long sidWrite			;@ 0xD400
+	.long sidWrite			;@ 0xD500
+	.long sidWrite			;@ 0xD600
+	.long sidWrite			;@ 0xD700
 	.long VIC_ram_W			;@ 0xD800
 	.long VIC_ram_W			;@ 0xD900
 	.long VIC_ram_W			;@ 0xDA00

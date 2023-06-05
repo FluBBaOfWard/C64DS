@@ -80,10 +80,9 @@ int main(int argc, char **argv) {
 		enableExit = true;
 	}
 	// Allocate C64 ram from the heap
-//	emu_ram_alloc = malloc(0x30600);
-//	emu_ram_base = emu_ram_alloc + 0x400;
+	emu_ram_alloc = malloc(0x30600);
+	emu_ram_base = emu_ram_alloc + 0x400;
 	setupGraphics();
-
 	setupStream();
 	irqSet(IRQ_VBLANK, myVblank);
 	setupGUI();
@@ -91,8 +90,9 @@ int main(int argc, char **argv) {
 	initSettings();
 //	machineInit();
 	// Clear DS VRAM and calculate LUTs.
-//	gfxInit();
-//	CIA_TOD_Init();
+	gfxInit();
+	CIA_TOD_Init();
+	machineReset();
 //	loadCart(0,0);
 	if ( initFileHelper() ) {
 		loadSettings();
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 		checkTimeOut();
 		guiRunLoop();
 		if (!pauseEmulation) {
-//			run();
+			run();
 		}
 	}
 	return 0;
@@ -194,29 +194,27 @@ void setEmuSpeed(int speed) {
 static void setupGraphics() {
 //---------------------------------------------------------------------------------
 
-	vramSetBankA(VRAM_A_MAIN_BG);
+	vramSetBankA(VRAM_A_MAIN_SPRITE);
 	vramSetBankB(VRAM_B_MAIN_BG_0x06020000);
 	vramSetBankC(VRAM_C_MAIN_BG_0x06040000);
 	vramSetBankD(VRAM_D_MAIN_BG_0x06060000);
-	vramSetBankE(VRAM_E_MAIN_SPRITE);
+	vramSetBankE(VRAM_E_LCD);
 	vramSetBankF(VRAM_F_LCD);
 	vramSetBankG(VRAM_G_LCD);
 	vramSetBankH(VRAM_H_SUB_BG);
 	vramSetBankI(VRAM_I_SUB_SPRITE);
 
 	// Set up the main display
-	videoSetMode(MODE_0_2D
-				 | DISPLAY_BG0_ACTIVE
+	videoSetMode(MODE_5_2D
 				 | DISPLAY_BG1_ACTIVE
 				 | DISPLAY_BG2_ACTIVE
+				 | DISPLAY_BG3_ACTIVE
 				 | DISPLAY_SPR_ACTIVE
-				 | DISPLAY_WIN0_ON
-				 | DISPLAY_WIN1_ON
 				 | DISPLAY_BG_EXT_PALETTE
 				 );
 	REG_BG0CNT = BG_32x64 | BG_MAP_BASE(0) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(1);
 	REG_BG1CNT = BG_32x64 | BG_MAP_BASE(2) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(0);
-	// Background 2 for border
+	// Background 2
 	REG_BG2CNT = BG_32x32 | BG_MAP_BASE(15) | BG_COLOR_256 | BG_TILE_BASE(1) | BG_PRIORITY(2);
 
 	// Set up the sub display
@@ -234,6 +232,9 @@ static void setupGraphics() {
 
 	decompress(EmuFontTiles, BG_GFX_SUB+0x1200, LZ77Vram);
 	setupMenuPalette();
+
+	tile_base = (void *)0x06020000;
+	obj_base = (void *)0x06000000;
 }
 
 void setupMenuPalette() {

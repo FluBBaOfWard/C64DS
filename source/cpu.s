@@ -1,16 +1,18 @@
+#ifdef __arm__
+
 #include "Shared/nds_asm.h"
 #include "ARM6502/M6502.i"
 #include "equates.h"
 
 	.global run
 	.global stepFrame
+	.global cpuInit
 	.global cpuReset
 	.global irq_scanlinehook
-	.global frametotal
+
+	.global frameTotal
 	.global waitMaskIn
 	.global waitMaskOut
-	.global sleeptime
-	.global novblankwait
 	.global wram_global_base
 
 	.section .text
@@ -32,16 +34,17 @@ run:						;@ Return after X frame(s)
 	b line0x
 
 ;@----------------------------------------------------------------------------
-stepFrame:					;@ Return after 1 frame
-	.type stepFrame STT_FUNC
-;@----------------------------------------------------------------------------
-	bx lr
-;@----------------------------------------------------------------------------
 ;@ Cycles ran out
 ;@----------------------------------------------------------------------------
 line0:
 	add r0,m6502ptr,#m6502Regs
 	stmia r0,{m6502nz-m6502pc}	;@ Save 6502 state
+
+	ldr r1,=fpsValue
+	ldr r0,[r1]
+	add r0,r0,#1
+	str r0,[r1]
+
 waitformulti:
 	ldr r1,=0x04000130			;@ Refresh input every frame
 	ldrh r0,[r1]
@@ -55,57 +58,50 @@ waitformulti:
 
 	ldr r2,dontstop
 	cmp r2,#0
-	ldmeqfd sp!,{r4-r11,lr}			;@ Exit here if doing single frame:
-	bxeq lr							;@ Return to rommenu()
+	ldmeqfd sp!,{r4-r11,lr}		;@ Exit here if doing single frame:
+	bxeq lr						;@ Return to rommenu()
 
 line0x:
 
-	bl newframe				;@ Display update
+//	bl newframe					;@ Display update
 
-	ldr r0,fpsvalue
-	add r0,r0,#1
-	str r0,fpsvalue
-
+	mov r11,r11
 	add r0,m6502ptr,#m6502Regs
 	ldmia r0,{m6502nz-m6502pc}	;@ Restore 6502 state
 
-	adr r0,line1_to_VBL
-	str r0,[r10,#nexttimeout]
-	str r0,[r10,#nexttimeout_]
-
 
 line1_to_VBL: ;@------------------------
-	ldr r0,[r10,#cyclesperscanline]
-	add cycles,cycles,r0
+	mov r0,#63
+	bl m6502RunXCycles
 
 	ldr r1,[r10,#scanline]
 	add r1,r1,#1
 	str r1,[r10,#scanline]
 	ldr r0,[r10,#lastscanline]
 	cmp r1,r0
-	ldrne pc,[r10,#scanlinehook]
-
+	bne line1_to_VBL
 
 ;@-------------------------------------------------
 	bl endframe					;@ Display update
 ;@-------------------------------------------------
 
-	ldr r0,[r10,#frame]
-	add r0,r0,#1
-	str r0,[r10,#frame]
+	ldr r1,frameTotal
+	add r1,r1,#1
+	str r1,frameTotal
 	b line0
-	adr addy,line0
-	str addy,[r10,#nexttimeout]
-	str addy,[r10,#nexttimeout_]
-
-	ldr pc,[r10,#scanlinehook]
 
 ;@----------------------------------------------------------
+frameTotal:			.long 0		;@ Let ui.c see frame count for savestates
 waitCountIn:		.byte 0
 waitMaskIn:			.byte 0
 waitCountOut:		.byte 0
 waitMaskOut:		.byte 0
 
+;@----------------------------------------------------------------------------
+stepFrame:					;@ Return after 1 frame
+	.type stepFrame STT_FUNC
+;@----------------------------------------------------------------------------
+	bx lr
 ;@----------------------------------------------------------
 irq_scanlinehook:
 ;@----------------------------------------------------------
@@ -147,7 +143,6 @@ VICRasterCheck:
 norasterirq:
 	b m6502CheckIrqs
 
-
 ;@----------------------------------------------------------------------------
 cpuReset:		;@ Called by loadCart/resetGame
 ;@----------------------------------------------------------------------------
@@ -155,8 +150,9 @@ cpuReset:		;@ Called by loadCart/resetGame
 
 ;@---Speed - 0.96MHz / 50Hz
 	mov r0,#63
-	str r1,[r10,#cyclesperscanline]
 ;@--------------------------------------
+	ldr r0,=m6502_0
+	bl m6502Init
 	ldr r0,=m6502_0
 	bl m6502Reset
 
@@ -165,14 +161,7 @@ cpuReset:		;@ Called by loadCart/resetGame
 ;@----------------------------------------------------------
 AGBjoypad:		.long 0
 EMUjoypad:		.long 0
-fiveminutes:	.long 5*60*60
-sleeptime:		.long 5*60*60
 dontstop:		.long 0
-novblankwait:	.long 0
-songnumber:		.long 0
-songcount:		.long 0
-emuflags:		.long 0
-fpsvalue:		.long 0
 
 ;@----------------------------------------------------------------------------
 #ifdef NDS
@@ -187,4 +176,7 @@ fpsvalue:		.long 0
 wram_global_base:
 m6502_0:
 	.space m6502Size
+	.space 0x80
 ;@----------------------------------------------------------------------------
+	.end
+#endif // #ifdef __arm__
