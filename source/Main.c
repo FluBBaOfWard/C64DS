@@ -195,9 +195,9 @@ static void setupGraphics() {
 //---------------------------------------------------------------------------------
 
 	vramSetBankA(VRAM_A_MAIN_SPRITE);
-	vramSetBankB(VRAM_B_MAIN_BG_0x06020000);
-	vramSetBankC(VRAM_C_MAIN_BG_0x06040000);
-	vramSetBankD(VRAM_D_MAIN_BG_0x06060000);
+	vramSetBankB(VRAM_B_MAIN_BG_0x06000000);
+	vramSetBankC(VRAM_C_MAIN_BG_0x06020000);
+	vramSetBankD(VRAM_D_MAIN_BG_0x06040000);
 	vramSetBankE(VRAM_E_LCD);
 	vramSetBankF(VRAM_F_LCD);
 	vramSetBankG(VRAM_G_LCD);
@@ -212,10 +212,13 @@ static void setupGraphics() {
 				 | DISPLAY_SPR_ACTIVE
 				 | DISPLAY_BG_EXT_PALETTE
 				 );
-	REG_BG0CNT = BG_32x64 | BG_MAP_BASE(0) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(1);
 	REG_BG1CNT = BG_32x64 | BG_MAP_BASE(2) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(0);
 	// Background 2
-	REG_BG2CNT = BG_32x32 | BG_MAP_BASE(15) | BG_COLOR_256 | BG_TILE_BASE(1) | BG_PRIORITY(2);
+	REG_BG2CNT = BG_BMP8_512x256 | BG_COLOR_256 | BG_TILE_BASE(0) | BG_PRIORITY(1);
+	// Background 3
+	REG_BG3CNT = BG_BMP8_512x256 | BG_COLOR_256 | BG_TILE_BASE(0) | BG_PRIORITY(1);
+	tile_base = BG_MAP_RAM(0);
+	obj_base = SPRITE_GFX;
 
 	// Set up the sub display
 	videoSetModeSub(MODE_0_2D
@@ -232,9 +235,6 @@ static void setupGraphics() {
 
 	decompress(EmuFontTiles, BG_GFX_SUB+0x1200, LZ77Vram);
 	setupMenuPalette();
-
-	tile_base = (void *)0x06020000;
-	obj_base = (void *)0x06000000;
 }
 
 void setupMenuPalette() {

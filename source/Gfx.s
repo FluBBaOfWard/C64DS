@@ -891,6 +891,7 @@ RenderLine:			;@ r0=?, r1=scanline.
 	stmfd sp!,{r1-r11,lr}
 	bl RenderSprites
 
+	mov r11,r11
 	subs r1,r1,#0x30			;@ This is where the VIC starts looking for background data.
 	bmi exit_line_render
 	cmp r1,#208

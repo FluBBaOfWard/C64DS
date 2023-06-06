@@ -63,7 +63,6 @@ waitformulti:
 
 line0x:
 
-	mov r11,r11
 	bl newframe					;@ Display update
 
 	add r0,m6502ptr,#m6502Regs
@@ -73,6 +72,8 @@ line0x:
 line1_to_VBL: ;@------------------------
 	mov r0,#63
 	bl m6502RunXCycles
+	ldr r1,[r10,#scanline]
+	bl irq_scanlinehook
 
 	ldr r1,[r10,#scanline]
 	add r1,r1,#1
@@ -105,7 +106,9 @@ stepFrame:					;@ Return after 1 frame
 ;@----------------------------------------------------------
 irq_scanlinehook:
 ;@----------------------------------------------------------
+	stmfd sp!,{lr}
 	bl RenderLine
+
 ScanlineTimerA1:
 	ldrb r1,[r10,#cia1ctrla]
 	tst r1,#0x01				;@ Timera1 active?
@@ -139,9 +142,21 @@ VICRasterCheck:
 	ldrb r0,[r10,#vicirqflag]
 	orr r0,r0,#1
 	strb r0,[r10,#vicirqflag]
-	
 norasterirq:
-	b m6502CheckIrqs
+
+	ldrb r2,[r10,#cia1irqctrl]
+	ldrb r1,[r10,#cia1irq]
+	ands r0,r2,r1
+	movne r0,#0x01			;@ Normal interrupt (CIA1)
+	ldrb r2,[r10,#vicirqenable]
+	ldrb r1,[r10,#vicirqflag]
+	ands r2,r2,r1
+	orrne r0,r0,#0x01		;@ Normal interrupt (VIC)
+
+	bl m6502SetIRQPin
+
+	ldmfd sp!,{lr}
+	bx lr
 
 ;@----------------------------------------------------------------------------
 cpuReset:		;@ Called by loadCart/resetGame
