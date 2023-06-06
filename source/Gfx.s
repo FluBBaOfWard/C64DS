@@ -188,6 +188,11 @@ gfxReset:	;@ Called with CPU reset
 //	mov r0,#-1
 //	strb r0,oldchrbase
 
+//	ldr r1,=63					;@ PAL=63, NTSC=64/65.
+//	str r1,[r10,#cyclesperscanline]
+	ldr r1,=311					;@ PAL=311, NTSC=262. number of lines=last+1
+	str r1,[r10,#lastscanline]
+
 	mov r1,#REG_BASE
 	mov r0,#0x0140			;@ X-delta
 	strh r0,[r1,#REG_BG2PA]

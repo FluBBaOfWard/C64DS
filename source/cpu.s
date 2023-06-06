@@ -63,9 +63,9 @@ waitformulti:
 
 line0x:
 
-//	bl newframe					;@ Display update
-
 	mov r11,r11
+	bl newframe					;@ Display update
+
 	add r0,m6502ptr,#m6502Regs
 	ldmia r0,{m6502nz-m6502pc}	;@ Restore 6502 state
 
