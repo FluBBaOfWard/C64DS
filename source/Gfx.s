@@ -13,7 +13,6 @@
 	.global RenderLine
 	.global SetC64GfxBases
 
-	.global VICState
 	.global gScaling
 	.global gTwitch
 	.global gFlicker
@@ -619,11 +618,9 @@ VIC_W:
 
 VIC_default_W:
 //	mov r11,r11
-//	ldr r2,=VICState
 	add r2,r10,#vic_base_offset
 	strb r0,[r2,r1]
 	bx lr
-
 
 ;@----------------------------------------------------------------------------
 VIC_ctrl1_W:		;@ 0xD011
@@ -681,10 +678,10 @@ SetC64GfxBases:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0,r12}
 
-	ldrb r0,[r10,#cia2porta]	;@ VIC bank
+	ldrb r0,[r10,#cia2porta]	;@ VIC bank, 0x4000*4
 	eor r0,r0,#0x03
 	and r0,r0,#0x03
-	ldrb r2,[r10,#vicmemctrl]
+	ldrb r2,[r10,#vicmemctrl]	;@ 0xD018
 	and r1,r2,#0xF0
 	orr r1,r1,r0,lsl#8
 	add r1,m6502zpage,r1,lsl#6
@@ -695,11 +692,10 @@ SetC64GfxBases:
 	and r1,r2,#0x0E
 	orr r0,r1,r0,lsl#4
 
-	and r1,r0,#0x3C
-	cmp r1,#0x04				;@ 0x1000
-	cmpne r1,#0x24				;@ 0x9000
-	ldreq r2,=Chargen			;@ r1 = CHRROM
-	movne r2,m6502zpage			;@ r1 = RAM
+	and r1,r0,#0x1C
+	cmp r1,#0x04				;@ 0x1000/0x9000
+	ldreq r2,=Chargen			;@ r2 = CHRROM
+	movne r2,m6502zpage			;@ r2 = RAM
 
 	bic r1,r0,#0x07
 	add r1,r2,r1,lsl#10
@@ -929,7 +925,7 @@ no_new_tile_row:
 
 	bic r0,r1,#0x07
 	and r1,r1,#0x07
-	add r0,r0,r0,lsl#2
+	add r0,r0,r0,lsl#2			;@ x5
 
 	ldr pc,RenderModePtr
 
@@ -1364,7 +1360,7 @@ RenderBlankLine:
 	orr r0,r0,#3
 	orr r0,r0,r0,lsl#8
 	orr r0,r0,r0,lsl#16
-	mov r1,#90					;@ Screen plus background
+	mov r1,#90					;@ Screen plus border
 blankloop:
 	str r0,[r9],#4
 	subs r1,r1,#1

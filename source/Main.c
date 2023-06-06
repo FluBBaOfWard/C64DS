@@ -206,11 +206,11 @@ static void setupGraphics() {
 
 	// Set up the main display
 	videoSetMode(MODE_5_2D
-				 | DISPLAY_BG1_ACTIVE
+//				 | DISPLAY_BG1_ACTIVE
 				 | DISPLAY_BG2_ACTIVE
 				 | DISPLAY_BG3_ACTIVE
 				 | DISPLAY_SPR_ACTIVE
-				 | DISPLAY_BG_EXT_PALETTE
+//				 | DISPLAY_BG_EXT_PALETTE
 				 );
 	REG_BG1CNT = BG_32x64 | BG_MAP_BASE(2) | BG_COLOR_16 | BG_TILE_BASE(2) | BG_PRIORITY(0);
 	// Background 2

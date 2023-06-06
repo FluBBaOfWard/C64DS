@@ -74,44 +74,46 @@ DEBUGSCREEN		= NTR_VRAM+0x3800
 
 			;@ io.s
 #define cia_base_offset 0x4F0
-			
-#define cia1porta		cia_base_offset
-#define cia1portb		cia_base_offset +1
-#define cia1ddra		cia_base_offset +2
-#define cia1ddrb		cia_base_offset +3
-#define cia1timeral		cia_base_offset +4
-#define cia1timerah		cia_base_offset +5
-#define cia1timerbl		cia_base_offset +6
-#define cia1timerbh		cia_base_offset +7
-#define cia1tod0		cia_base_offset +8
-#define cia1tod1		cia_base_offset +9
-#define cia1tod2		cia_base_offset +10
-#define cia1tod3		cia_base_offset +11
-#define cia1sioport		cia_base_offset +12
-#define cia1irqctrl		cia_base_offset +13
-#define cia1ctrla		cia_base_offset +14
-#define cia1ctrlb		cia_base_offset +15
-#define timer1a			cia_base_offset +16
-#define timer1b			cia_base_offset +20
 
-#define cia2porta		cia_base_offset +24
-#define cia2portb		cia_base_offset +25
-#define cia2ddra		cia_base_offset +26
-#define cia2ddrb		cia_base_offset +27
-#define cia2timeral		cia_base_offset +28
-#define cia2timerah		cia_base_offset +29
-#define cia2timerbl		cia_base_offset +30
-#define cia2timerbh		cia_base_offset +31
-#define cia2tod0		cia_base_offset +32
-#define cia2tod1		cia_base_offset +33
-#define cia2tod2		cia_base_offset +34
-#define cia2tod3		cia_base_offset +35
-#define cia2sioport		cia_base_offset +36
-#define cia2irqctrl		cia_base_offset +37
-#define cia2ctrla		cia_base_offset +38
-#define cia2ctrlb		cia_base_offset +39
-#define timer2a			cia_base_offset +40
-#define timer2b			cia_base_offset +44
+#define cia1_base_offset	cia_base_offset
+#define cia1porta		cia1_base_offset
+#define cia1portb		cia1_base_offset +1
+#define cia1ddra		cia1_base_offset +2
+#define cia1ddrb		cia1_base_offset +3
+#define cia1timeral		cia1_base_offset +4
+#define cia1timerah		cia1_base_offset +5
+#define cia1timerbl		cia1_base_offset +6
+#define cia1timerbh		cia1_base_offset +7
+#define cia1tod0		cia1_base_offset +8
+#define cia1tod1		cia1_base_offset +9
+#define cia1tod2		cia1_base_offset +10
+#define cia1tod3		cia1_base_offset +11
+#define cia1sioport		cia1_base_offset +12
+#define cia1irqctrl		cia1_base_offset +13
+#define cia1ctrla		cia1_base_offset +14
+#define cia1ctrlb		cia1_base_offset +15
+#define timer1a			cia1_base_offset +16
+#define timer1b			cia1_base_offset +20
+
+#define cia2_base_offset	cia_base_offset +24
+#define cia2porta		cia2_base_offset
+#define cia2portb		cia2_base_offset +1
+#define cia2ddra		cia2_base_offset +2
+#define cia2ddrb		cia2_base_offset +3
+#define cia2timeral		cia2_base_offset +4
+#define cia2timerah		cia2_base_offset +5
+#define cia2timerbl		cia2_base_offset +6
+#define cia2timerbh		cia2_base_offset +7
+#define cia2tod0		cia2_base_offset +8
+#define cia2tod1		cia2_base_offset +9
+#define cia2tod2		cia2_base_offset +10
+#define cia2tod3		cia2_base_offset +11
+#define cia2sioport		cia2_base_offset +12
+#define cia2irqctrl		cia2_base_offset +13
+#define cia2ctrla		cia2_base_offset +14
+#define cia2ctrlb		cia2_base_offset +15
+#define timer2a			cia2_base_offset +16
+#define timer2b			cia2_base_offset +20
 
 #define cia1irq			cia_base_offset +48
 #define cia2nmi			cia_base_offset +49

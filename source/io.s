@@ -26,8 +26,8 @@
 IO_reset:
 ;@----------------------------------------------------------------------------
 	mov r0,#0
-	ldr r2,=CIA1State
-	mov r1,#0x0F
+	add r2,r10,#cia_base_offset
+	mov r1,#47
 cialoop:
 	strb r0,[r2,r1]
 	subs r1,r1,#1
@@ -122,7 +122,7 @@ CIA1_R:
 	.long CIA1_empty_R		;@ 0xDC0E
 	.long CIA1_empty_R		;@ 0xDC0F
 CIA1_empty_R:
-	add r2,r10,#cia_base_offset
+	add r2,r10,#cia1_base_offset
 	ldrb r0,[r2,r1]
 	bx lr
 	ldr r2,=CIA1State
@@ -151,7 +151,7 @@ CIA1_W:
 	.long CIA1_CTRLA_W		;@ 0xDC0E
 	.long CIA1_CTRLB_W		;@ 0xDC0F
 CIA1_empty_W:
-	add r2,r10,#cia_base_offset
+	add r2,r10,#cia1_base_offset
 	strb r0,[r2,r1]
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -179,7 +179,8 @@ CIA2_R:
 	.long CIA2_empty_R		;@ 0xDD0E
 	.long CIA2_empty_R		;@ 0xDD0F
 CIA2_empty_R:
-	ldr r2,=CIA2State
+	ldr r2,=cia2_base_offset
+	add r2,r10,r2
 	ldrb r0,[r2,r1]
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -207,14 +208,16 @@ CIA2_W:
 	.long CIA2_empty_W		;@ 0xDD0E
 	.long CIA2_empty_W		;@ 0xDD0F
 CIA2_empty_W:
-	ldr r2,=CIA2State
+	ldr r2,=cia2_base_offset
+	add r2,r10,r2
 	strb r0,[r2,r1]
 	bx lr
 
 ;@----------------------------------------------------------------------------
 CIA2_PORTA_W:
 ;@----------------------------------------------------------------------------
-	ldr r2,=CIA2State
+	ldr r2,=cia2_base_offset
+	add r2,r10,r2
 	strb r0,[r2,r1]
 	b SetC64GfxBases
 ;@----------------------------------------------------------------------------
