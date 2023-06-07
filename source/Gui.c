@@ -4,6 +4,7 @@
 #include "Shared/EmuMenu.h"
 #include "Shared/EmuSettings.h"
 #include "Main.h"
+#include "C64Keyboard.h"
 #include "FileHandling.h"
 //#include "Cart.h"
 #include "Gfx.h"
@@ -11,12 +12,16 @@
 #include "cpu.h"
 #include "ARM6502/Version.h"
 
-#define EMUVERSION "V0.1.0 2023-05-05"
+#define EMUVERSION "V0.1.0 2023-05-07"
 
+#define ENABLE_LIVE_UI		(1<<12)
 #define ALLOW_SPEED_HACKS	(1<<17)
 #define ALLOW_REFRESH_CHG	(1<<19)
 
 void hacksInit(void);
+
+static void nullUIC64(int key);
+static void setupC64Background(void);
 
 static void paletteChange(void);
 static void machineSet(void);
@@ -24,7 +29,7 @@ static void speedHackSet(void);
 static void refreshChgSet(void);
 static void borderSet(void);
 
-//static void uiMachine(void);
+static void uiMachine(void);
 static void uiDebug(void);
 static void updateGameInfo(void);
 
@@ -43,7 +48,7 @@ const fptr fnList9[] = {exitEmulator, backOutOfMenu};
 const fptr fnList10[] = {uiDummy};
 const fptr *const fnListX[] = {fnList0, fnList1, fnList2, fnList3, fnList4, fnList5, fnList6, fnList7, fnList8, fnList9, fnList10};
 u8 menuXItems[] = {ARRSIZE(fnList0), ARRSIZE(fnList1), ARRSIZE(fnList2), ARRSIZE(fnList3), ARRSIZE(fnList4), ARRSIZE(fnList5), ARRSIZE(fnList6), ARRSIZE(fnList7), ARRSIZE(fnList8), ARRSIZE(fnList9), ARRSIZE(fnList10)};
-const fptr drawUIX[] = {uiNullNormal, uiFile, uiOptions, uiAbout, uiController, uiDisplay, uiSettings, uiDebug, uiDummy, uiDummy};
+const fptr drawUIX[] = {uiNullNormal, uiFile, uiOptions, uiAbout, uiController, uiDisplay, uiMachine, uiSettings, uiDebug, uiDummy, uiDummy};
 
 u8 gGammaValue = 0;
 u8 gContrastValue = 3;
@@ -65,7 +70,7 @@ const char *const langTxt[]  = {"Japanese", "English"};
 
 
 void setupGUI() {
-	emuSettings = AUTOPAUSE_EMULATION | AUTOLOAD_NVRAM | AUTOSLEEP_OFF;
+	emuSettings = AUTOPAUSE_EMULATION | AUTOLOAD_NVRAM | AUTOSLEEP_OFF | ENABLE_LIVE_UI;
 	keysSetRepeat(25, 4);	// Delay, repeat.
 	menuXItems[1] = ARRSIZE(fnList1) - (enableExit?0:1);
 	openMenu();
@@ -90,7 +95,13 @@ void quickSelectGame(void) {
 }
 
 void uiNullNormal() {
-	uiNullDefault();
+//	if (gMachine == HW_C64) {
+		setupC64Background();
+//	} else {
+//		uiNullDefault();
+//		return;
+//	}
+	drawItem("Menu",27,1,0);
 }
 
 void uiFile() {
@@ -111,7 +122,7 @@ void uiOptions() {
 	setupMenu();
 	drawMenuItem("Controller");
 	drawMenuItem("Display");
-//	drawMenuItem("Machine");
+	drawMenuItem("Machine");
 	drawMenuItem("Settings");
 	drawMenuItem("Debug");
 }
@@ -146,10 +157,10 @@ void uiDisplay() {
 //	drawSubItem("B&W Palette:", palTxt[gPaletteBank]);
 	drawSubItem("Border:", autoTxt[gBorderEnable]);
 }
-/*
+
 static void uiMachine() {
 	setupSubMenu("Machine Settings");
-	drawSubItem("Machine:", machTxt[gMachineSet]);
+	drawSubItem("Machine:", machTxt[0]);
 	drawSubItem("Select WS Bios ->", NULL);
 	drawSubItem("Select WS Color Bios ->", NULL);
 	drawSubItem("Select WS Crystal Bios ->", NULL);
@@ -158,7 +169,7 @@ static void uiMachine() {
 	drawSubItem("Cpu Speed Hacks:", autoTxt[(emuSettings&ALLOW_SPEED_HACKS)>>17]);
 //	drawSubItem("Language: ", langTxt[gLang]);
 }
-*/
+
 void uiSettings() {
 	setupSubMenu("Settings");
 	drawSubItem("Speed:", speedTxt[(emuSettings>>6)&3]);
@@ -182,20 +193,20 @@ void uiDebug() {
 
 
 void nullUINormal(int key) {
-	if (key & KEY_TOUCH) {
-		openMenu();
+	if (!(emuSettings & (1<<12))) {
+		nullUIDebug(key);		// Just check touch, open menu.
+		return;
 	}
+	nullUIC64(key);
+//	if (key & KEY_TOUCH) {
+//		openMenu();
+//	}
 }
 
 void nullUIDebug(int key) {
 	if (key & KEY_TOUCH) {
 		openMenu();
 	}
-}
-
-void resetGame() {
-//	checkMachine();
-//	loadCart();
 }
 
 void updateGameInfo() {
@@ -233,6 +244,44 @@ void debugUndefinedInstruction() {
 void debugCrashInstruction() {
 	debugOutput("CPU Crash! (0xF1)");
 }
+
+void nullUIC64(int key) {
+	int xpos, ypos;
+
+	if (EMUinput & KEY_TOUCH) {
+		touchPosition myTouch;
+		touchRead(&myTouch);
+		xpos = (myTouch.px>>2);
+		ypos = (myTouch.py>>4);
+		if ( (xpos > 51) && (ypos < 2) ) {
+			openMenu();
+		}
+		else {
+			SetC64Key((myTouch.px>>3), (myTouch.py>>3), 1);
+		}
+//		else if ((ypos > 4 && ypos < 6) && (xpos > 21 && xpos < 43)) {	// Cartridge port
+//			cartridgePortTouched(keyHit);
+//		}
+//		else if ((ypos == 10) && (xpos > 46 && xpos < 52)) {	// Hold button
+//			EMUinput |= KEY_START;
+//		}
+	}
+	else {
+		SetC64Key(0, 0, 0);
+	}
+}
+
+//---------------------------------------------------------------------------------
+void setupC64Background(void) {
+	setupCompressedBackground(C64KeyboardTiles, C64KeyboardMap, 8);
+	memcpy(BG_PALETTE_SUB+0x80, C64KeyboardPal, C64KeyboardPalLen);
+}
+
+void resetGame() {
+//	checkMachine();
+//	loadCart();
+}
+
 //---------------------------------------------------------------------------------
 /// Switch between Player 1 & Player 2 controls
 void controllerSet() {				// See io.s: refreshEMUjoypads

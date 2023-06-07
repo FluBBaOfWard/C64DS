@@ -5,7 +5,9 @@
 extern "C" {
 #endif
 
-extern bool gameInserted;
+extern unsigned char *emu_ram_alloc;
+extern unsigned char *emu_ram_base;
+
 extern uint16 *map0sub;
 
 void waitVBlank(void);

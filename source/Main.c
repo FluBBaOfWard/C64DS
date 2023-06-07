@@ -164,32 +164,6 @@ void setEmuSpeed(int speed) {
 	}
 }
 
-/*
- // allocate some RAM to sub & main bg
- GX_SetBankForBG(GX_VRAM_BG_256_BD);
- GX_SetBankForOBJ(GX_VRAM_OBJ_128_A);
-
- // set sub & main background mode
- GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_2D);
- GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);
-
-
- // setup main bg1
- G2_SetBG1Control(GX_BG_SCRSIZE_TEXT_256x256, GX_BG_COLORMODE_16, GX_BG_SCRBASE_0x0000, GX_BG_CHARBASE_0x00000, GX_BG_EXTPLTT_01);
- G2_SetBG1Priority(0);
- // setup main bg2
- G2_SetBG2Control256Bmp(GX_BG_SCRSIZE_256BMP_512x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
- G2_SetBG2Priority(1);
- // setup main bg3
- G2_SetBG3Control256Bmp(GX_BG_SCRSIZE_256BMP_512x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
- G2_SetBG3Priority(1);
- //	bg1,bg2,bg3 & obj is visible
- GX_SetVisiblePlane(GX_PLANEMASK_BG1 | GX_PLANEMASK_BG2 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
- tile_base = G2_GetBG2ScrPtr();
- 
- obj_base = G2_GetOBJCharPtr();
-
- */
 //---------------------------------------------------------------------------------
 static void setupGraphics() {
 //---------------------------------------------------------------------------------

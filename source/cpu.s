@@ -62,6 +62,7 @@ waitformulti:
 	bxeq lr						;@ Return to rommenu()
 
 line0x:
+//	bl ManageInput
 
 	bl newframe					;@ Display update
 
@@ -191,7 +192,7 @@ dontstop:		.long 0
 wram_global_base:
 m6502_0:
 	.space m6502Size
-	.space 0x80
+	.space 0x180
 ;@----------------------------------------------------------------------------
 	.end
 #endif // #ifdef __arm__

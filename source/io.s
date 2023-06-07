@@ -9,6 +9,7 @@
 	.global CIA2_TOD_Base
 	.global ManageInput
 	.global CalibrateTouch
+	.global SetC64Key
 
 	.global EMUinput
 	.global joyCfg
@@ -462,6 +463,7 @@ ManageInput:
 
 ;@----------------------------------------------------------------------------
 SetC64Key:			;@ r0=x,r1=y,r2=touch.
+	.type SetC64Key STT_FUNC
 ;@----------------------------------------------------------------------------
 	adr r3,Keyboard_M			;@ Clear Keyboard Matrix
 	mov r12,#-1
@@ -470,7 +472,7 @@ SetC64Key:			;@ r0=x,r1=y,r2=touch.
 
 	cmp r2,#0
 	bxeq lr
-	sub r1,r1,#0xD
+	sub r1,r1,#0xC
 	movs r1,r1,asr#1			;@ Y ready.
 	bxmi lr
 	cmp r1,#5

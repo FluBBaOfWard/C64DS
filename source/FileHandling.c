@@ -164,23 +164,55 @@ void saveState() {
 //	saveDeviceState(folderName);
 }
 
+int loadC64ROM(const char *fileName) {
+	int size = 0;
+	int fileEnd;
+	u16 fileStart;
+	FILE *file;
+
+	if ((file = fopen(fileName, "r"))) {
+		fseek(file, 0, SEEK_END);
+		size = ftell(file) - 2;
+		if (size > 0xF000) {
+			infoOutput("File too large!");
+			size = 0;
+		}
+		else {
+			fseek(file, 0, SEEK_SET);
+			fread(&fileStart, 1 , 2, file);
+			fread(&emu_ram_base[fileStart], 1, size, file);
+			fileEnd = fileStart + size;
+			emu_ram_base[0x2d] = emu_ram_base[0x2f] = emu_ram_base[0x31] = emu_ram_base[0xAE] = (unsigned char)fileEnd;
+			emu_ram_base[0x2e] = emu_ram_base[0x30] = emu_ram_base[0x32] = emu_ram_base[0xAF] = (unsigned char)(fileEnd>>8);
+			strlcpy(currentFilename, fileName, sizeof(currentFilename));
+		}
+		fclose(file);
+	}
+	else {
+		infoOutput("Couldn't open file:");
+		infoOutput(fileName);
+	}
+	return size;
+}
+
 //---------------------------------------------------------------------------------
 bool loadGame(const char *gameName) {
 	if ( gameName ) {
 		cls(0);
 		drawText("     Please wait, loading.", 11, 0);
 //		gRomSize = loadROM(romSpacePtr, gameName, maxRomSize);
+		loadC64ROM(gameName);
 //		if ( gRomSize ) {
 //			checkMachine();
 			setEmuSpeed(0);
 //			loadCart();
 //			gameInserted = true;
-			if ( emuSettings & AUTOLOAD_NVRAM ) {
+//			if ( emuSettings & AUTOLOAD_NVRAM ) {
 //				loadNVRAM();
-			}
-			if ( emuSettings & AUTOLOAD_STATE ) {
-				loadState();
-			}
+//			}
+//			if ( emuSettings & AUTOLOAD_STATE ) {
+//				loadState();
+//			}
 			closeMenu();
 			return false;
 //		}
