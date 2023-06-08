@@ -1,6 +1,6 @@
 #ifdef __arm__
 
-//#include "Sphinx/Sphinx.i"
+#include "ARM6581/ARM6581.i"
 
 	.global soundInit
 	.global soundReset
@@ -59,38 +59,10 @@ VblSound2:					;@ r0=length, r1=pointer
 	cmp r2,#0
 	bne silenceMix
 
-	stmfd sp!,{r0,r4,r5,lr}
-//	ldr spxptr,=sphinx0
-	ldr r4,pcmReadPtr
-	add r5,r4,r0
-	str r5,pcmReadPtr
+	stmfd sp!,{r0,lr}
+	bl SID_StartMixer
 
-	bl soundCopyBuff
-
-	ldr r0,pcmWritePtr
-	sub r0,r5,r0
-	add r0,r0,#WRITE_BUFFER_SIZE/2
-	ldr r2,neededExtra
-	rsb r2,r2,r2,lsl#3		;@ mul 7
-	add r0,r0,r2
-	mov r0,r0,asr#3
-	str r0,neededExtra
-	bic r0,r0,#1
-//	str r0,[spxptr,#missingSamplesCnt]
-
-	ldmfd sp!,{r0,r4,r5,lr}
-	bx lr
-;@----------------------------------------------------------------------------
-soundCopyBuff:
-;@----------------------------------------------------------------------------
-	ldr r3,=WAVBUFFER
-	mov r4,r4,lsl#21
-sndCopyLoop:
-	subs r0,r0,#1
-	ldrpl r2,[r3,r4,lsr#19]
-	strpl r2,[r1],#4
-	add r4,r4,#0x00200000
-	bhi sndCopyLoop
+	ldmfd sp!,{r0,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
 silenceMix:

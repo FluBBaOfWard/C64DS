@@ -8,7 +8,6 @@
 	.global CIA1_TOD_Base
 	.global CIA2_TOD_Base
 	.global ManageInput
-	.global CalibrateTouch
 	.global SetC64Key
 
 	.global EMUinput
@@ -394,6 +393,7 @@ VIC_ram_W:
 	strb r0,[r2,r1,lsr#22]
 	bx lr
 ;@----------------------------------------------------------------------------
+
 ;@----------------------------------------------------------------------------
 IO_RES0_W:
 ;@----------------------------------------------------------------------------
@@ -403,26 +403,6 @@ IO_RES1_W:
 	mov r0,#0xFF
 	bx lr
 
-;@----------------------------------------------------------------------------
-CalibrateTouch:			;@ (r0=mytouch struct), out x = 0->31, y = 0->23
-;@----------------------------------------------------------------------------
-	ldr r1,[r0]
-	ldr r2,[r0,#4]
-
-	sub r1,r1,#0x140
-	ldr r3,=1231355
-	mul r1,r3,r1
-	mov r1,r1,lsr#24+3			;@ X ready.
-
-	sub r2,r2,#0x0E0
-	ldr r3,=875333				;@ for 0 -> 191
-	mul r2,r3,r2
-	mov r2,r2,lsr#24+3			;@ Y ready.
-
-	str r1,[r0]
-	str r2,[r0,#4]
-
-	bx lr
 ;@----------------------------------------------------------------------------
 ManageInput:
 ;@----------------------------------------------------------------------------
@@ -437,8 +417,6 @@ ManageInput:
 	ldr r3,[r3]
 	cmp r3,#0
 	bleq SetC64Key
-
-
 
 	ldr r4,ntr_pad_current
 	mov r0,r4,lsr#4
@@ -456,7 +434,6 @@ ManageInput:
 //	movne r1,r0
 //	movne r0,#0
 	str r0,joy0state
-
 
 	ldmfd sp!,{r4,lr}
 	bx lr

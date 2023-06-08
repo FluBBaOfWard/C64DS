@@ -1,6 +1,6 @@
 C64 Todo
 
-	Fix better sound?
+	Add joystick emulation.
 
 GFX:
 	See VIC todo.
