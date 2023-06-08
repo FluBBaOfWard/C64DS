@@ -203,7 +203,6 @@ bool loadGame(const char *gameName) {
 //		gRomSize = loadROM(romSpacePtr, gameName, maxRomSize);
 		loadC64ROM(gameName);
 //		if ( gRomSize ) {
-//			checkMachine();
 			setEmuSpeed(0);
 //			loadCart();
 //			gameInserted = true;

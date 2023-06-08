@@ -15,7 +15,6 @@ int initSettings(void);
 int loadSettings(void);
 void saveSettings(void);
 bool loadGame(const char *gameName);
-void checkMachine(void);
 void loadNVRAM(void);
 void saveNVRAM(void);
 void loadState(void);

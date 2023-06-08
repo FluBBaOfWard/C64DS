@@ -16,7 +16,6 @@
 #include "cia_tod.h"
 
 extern void machineReset(void);
-extern void machineRun(void);
 
 //==========================================================================
 

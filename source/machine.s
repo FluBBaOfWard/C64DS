@@ -3,14 +3,12 @@
 #include "ARM6502/M6502mac.h"
 
 	.global machineReset
-	.global machineRun
 	.global BankSwitch_R
 	.global BankSwitch_0_W
 	.global BankSwitch_1_W
 	.global Chargen
 	.global Basic
 	.global Kernal
-//	.global Keyboard_gfx
 
 
 	.section .text
@@ -33,21 +31,6 @@ machineReset:
 	bl IO_reset
 //	bl SOUND_reset
 	bl cpuReset
-
-	ldmfd sp!,{r4-r11,lr}
-	bx lr
-;@----------------------------------------------------------------------------
-machineRun:
-;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r11,lr}
-
-	ldr globalptr,=wram_global_base
-	ldr r0,=emu_ram_base
-	ldr m6502zpage,[r0]
-
-	bl ManageInput
-	mov r0,#0
-	bl run
 
 	ldmfd sp!,{r4-r11,lr}
 	bx lr
@@ -103,9 +86,6 @@ tbLoop1:
 	str r1,[r4,r0,lsl#2]
 	str r7,[r5,r0,lsl#2]	;@ RdMem
 	str r8,[r6,r0,lsl#2]	;@ WrMem
-
-//	mov m6502_pc,#0		;@ (eliminates any encodePC errors during mapper*init)
-//	str m6502_pc,lastbank
 
 	adr r4,HuMapData
 	mov r5,#0x80
@@ -261,6 +241,3 @@ Basic:
 Kernal:
 	.incbin "kernal.rom"
 //	.space 0x2000
-//Keyboard_gfx:			;@ Space for loading gfx
-//	.space 0x1000
-

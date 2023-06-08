@@ -15,7 +15,13 @@
 	.global waitMaskOut
 	.global wram_global_base
 
-	.section .text
+	.arm
+
+#ifdef GBA
+	.section .ewram, "ax", %progbits	;@ For the GBA
+#else
+	.section .text						;@ For anything else
+#endif
 	.align 2
 ;@----------------------------------------------------------------------------
 run:						;@ Return after X frame(s)
@@ -28,49 +34,22 @@ run:						;@ Return after X frame(s)
 	bxne lr
 	stmfd sp!,{r4-r11,lr}
 
-	ldr globalptr,=wram_global_base
-	ldr r0,=emu_ram_base
-	ldr m6502zpage,[r0]
-	b line0x
+;@----------------------------------------------------------------------------
+runStart:
+;@----------------------------------------------------------------------------
+	ldr r0,=EMUinput
+	ldr r0,[r0]
 
-;@----------------------------------------------------------------------------
-;@ Cycles ran out
-;@----------------------------------------------------------------------------
-line0:
+	bl refreshEMUjoypads
+
+	ldr m6502ptr,=m6502_0
 	add r0,m6502ptr,#m6502Regs
-	stmia r0,{m6502nz-m6502pc}	;@ Save 6502 state
-
-	ldr r1,=fpsValue
-	ldr r0,[r1]
-	add r0,r0,#1
-	str r0,[r1]
-
-waitformulti:
-	ldr r1,=0x04000130			;@ Refresh input every frame
-	ldrh r0,[r1]
-		eor r0,r0,#0xff
-		eor r0,r0,#0x300		;@ r0=button state (raw)
-	ldr r1,AGBjoypad
-	eor r1,r1,r0
-	and r1,r1,r0				;@ r1=button state (0->1)
-	str r0,AGBjoypad
-
-
-	ldr r2,dontstop
-	cmp r2,#0
-	ldmeqfd sp!,{r4-r11,lr}		;@ Exit here if doing single frame:
-	bxeq lr						;@ Return to rommenu()
-
-line0x:
-//	bl ManageInput
-
+	ldmia r0,{m6502nz-m6502pc,m6502zpage}	;@ Restore M6502 state
 	bl newframe					;@ Display update
 
-	add r0,m6502ptr,#m6502Regs
-	ldmia r0,{m6502nz-m6502pc}	;@ Restore 6502 state
-
-
-line1_to_VBL: ;@------------------------
+;@----------------------------------------------------------------------------
+c64FrameLoop:
+;@----------------------------------------------------------------------------
 	mov r0,#63
 	bl m6502RunXCycles
 	ldr r1,[r10,#scanline]
@@ -81,16 +60,29 @@ line1_to_VBL: ;@------------------------
 	str r1,[r10,#scanline]
 	ldr r0,[r10,#lastscanline]
 	cmp r1,r0
-	bne line1_to_VBL
-
+	bne c64FrameLoop
 ;@-------------------------------------------------
 	bl endframe					;@ Display update
 ;@-------------------------------------------------
+	add r0,m6502ptr,#m6502Regs
+	stmia r0,{m6502nz-m6502pc}	;@ Save 6502 state
+
+	ldr r1,=fpsValue
+	ldr r0,[r1]
+	add r0,r0,#1
+	str r0,[r1]
 
 	ldr r1,frameTotal
 	add r1,r1,#1
 	str r1,frameTotal
-	b line0
+
+	ldrh r0,waitCountOut
+	add r0,r0,#1
+	ands r0,r0,r0,lsr#8
+	strb r0,waitCountOut
+	ldmeqfd sp!,{r4-r11,lr}		;@ Exit here if doing single frame:
+	bxeq lr						;@ Return to rommenu()
+	b runStart
 
 ;@----------------------------------------------------------
 frameTotal:			.long 0		;@ Let ui.c see frame count for savestates
@@ -103,6 +95,36 @@ waitMaskOut:		.byte 0
 stepFrame:					;@ Return after 1 frame
 	.type stepFrame STT_FUNC
 ;@----------------------------------------------------------------------------
+	stmfd sp!,{r4-r11,lr}
+	ldr m6502ptr,=m6502_0
+	add r0,m6502ptr,#m6502Regs
+	ldmia r0,{m6502nz-m6502pc,m6502zpage}	;@ Restore M6502 state
+	bl newframe					;@ Display update
+;@----------------------------------------------------------------------------
+c64StepLoop:
+;@----------------------------------------------------------------------------
+	mov r0,#63
+	bl m6502RunXCycles
+	ldr r1,[r10,#scanline]
+	bl irq_scanlinehook
+
+	ldr r1,[r10,#scanline]
+	add r1,r1,#1
+	str r1,[r10,#scanline]
+	ldr r0,[r10,#lastscanline]
+	cmp r1,r0
+	bne c64StepLoop
+;@-------------------------------------------------
+	bl endframe					;@ Display update
+;@-------------------------------------------------
+	add r0,m6502ptr,#m6502Regs
+	stmia r0,{m6502nz-m6502pc}	;@ Save 6502 state
+
+	ldr r1,frameTotal
+	add r1,r1,#1
+	str r1,frameTotal
+
+	ldmfd sp!,{r4-r11,lr}
 	bx lr
 ;@----------------------------------------------------------
 irq_scanlinehook:
@@ -164,9 +186,6 @@ cpuReset:		;@ Called by loadCart/resetGame
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
-;@---Speed - 0.96MHz / 50Hz
-	mov r0,#63
-;@--------------------------------------
 	ldr r0,=m6502_0
 	bl m6502Init
 	ldr r0,=m6502_0
@@ -174,10 +193,6 @@ cpuReset:		;@ Called by loadCart/resetGame
 
 	ldmfd sp!,{lr}
 	bx lr
-;@----------------------------------------------------------
-AGBjoypad:		.long 0
-EMUjoypad:		.long 0
-dontstop:		.long 0
 
 ;@----------------------------------------------------------------------------
 #ifdef NDS

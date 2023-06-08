@@ -18,6 +18,7 @@
 #define ALLOW_SPEED_HACKS	(1<<17)
 #define ALLOW_REFRESH_CHG	(1<<19)
 
+void machineReset(void);
 void hacksInit(void);
 
 static void nullUIC64(int key);
@@ -273,12 +274,12 @@ void nullUIC64(int key) {
 
 //---------------------------------------------------------------------------------
 void setupC64Background(void) {
-	setupCompressedBackground(C64KeyboardTiles, C64KeyboardMap, 8);
+	setupCompressedBackground(C64KeyboardTiles, C64KeyboardMap, 9);
 	memcpy(BG_PALETTE_SUB+0x80, C64KeyboardPal, C64KeyboardPalLen);
 }
 
 void resetGame() {
-//	checkMachine();
+	machineReset();
 //	loadCart();
 }
 

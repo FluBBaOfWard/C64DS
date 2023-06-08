@@ -7,7 +7,7 @@
 	.global IO_W
 	.global CIA1_TOD_Base
 	.global CIA2_TOD_Base
-	.global ManageInput
+	.global refreshEMUjoypads
 	.global SetC64Key
 
 	.global EMUinput
@@ -15,9 +15,6 @@
 	.global mytouch_x
 	.global mytouch_y
 	.global mytouch_press
-	.global ntr_pad_current
-	.global ntr_pad_down
-	.global ntr_pad_up
 	.global keyb_pos
 
 	.section .text
@@ -285,7 +282,7 @@ CIA1_Reload_TB:
 CIA1_PortA_R:				;@ 0xDC00 Joy2/Keyboard
 ;@----------------------------------------------------------------------------
 //	mov r11,r11					;@ No$GBA debugg
-	ldr r0,joy0state
+	ldrb r0,joy0state
 //	ldrb r0,[r10,#cia1ddra]
 	eor r0,r0,#0xFF
 	bx lr
@@ -303,7 +300,7 @@ cia1portbloop:
 	andcs r0,r0,r1
 	add addy,addy,#1
 	bne cia1portbloop
-	ldr r1,joy1state
+	ldrb r1,joy1state
 	eor r1,r1,#0xFF
 	and r0,r0,r1
 
@@ -404,36 +401,28 @@ IO_RES1_W:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-ManageInput:
+refreshEMUjoypads:			;@ Call every frame
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,lr}
-
-	ldr r3,=mytouch_x
-	ldr r0,[r3],#4
-	ldr r1,[r3],#4
-	ldr r2,[r3]
-
-	ldr r3,=keyb_pos
-	ldr r3,[r3]
-	cmp r3,#0
-	bleq SetC64Key
-
-	ldr r4,ntr_pad_current
-	mov r0,r4,lsr#4
-	and r0,r0,#0x0F
-//		ldr r2,joycfg
-//		andcs r4,r4,r2
-//		movcss addy,r4,lsr#10	;@ L?
-//		andcs r4,r4,r2,lsr#16
+		ldr r4,=frameTotal
+		ldr r4,[r4]
+		movs r0,r4,lsr#2		;@ C=frame&2 (autofire alternates every other frame)
+	ldr r4,EMUinput
+	and r0,r4,#0xF0
+		ldr r2,joyCfg
+		andcs r4,r4,r2
+		movcss addy,r4,lsr#10	;@ L?
+		andcs r4,r4,r2,lsr#16
 	adr addy,rlud2udlr
-	ldrb r0,[addy,r0]			;@ downupleftright
-	tst r4,#0x02
+	ldrb r0,[addy,r0,lsr#4]		;@ downupleftright
+	tst r4,#0x02				;@ B
 	orrne r0,r0,#0x10			;@ C64 fire button
-//	mov r1,#0
-//	tst r2,#0x20000000
-//	movne r1,r0
-//	movne r0,#0
-	str r0,joy0state
+	mov r1,#0
+	tst r2,#0x20000000
+	movne r1,r0
+	movne r0,#0
+	strb r0,joy1state
+	strb r1,joy0state
 
 	ldmfd sp!,{r4,lr}
 	bx lr
@@ -449,7 +438,7 @@ SetC64Key:			;@ r0=x,r1=y,r2=touch.
 
 	cmp r2,#0
 	bxeq lr
-	sub r1,r1,#0xC
+	sub r1,r1,#0xD
 	movs r1,r1,asr#1			;@ Y ready.
 	bxmi lr
 	cmp r1,#5
@@ -475,12 +464,6 @@ joyCfg: .long 0x00ff01ff	;@ byte0=auto mask, byte1=(saves R), byte2=R auto mask
 EMUinput:			;@ This label here for main.c to use
 	.long 0			;@ EMUjoypad (this is what Emu sees)
 
-ntr_pad_current:
-	.long 0
-ntr_pad_down:
-	.long 0
-ntr_pad_up:
-	.long 0
 mytouch_x:
 	.long 0
 mytouch_y:
@@ -491,9 +474,10 @@ keyb_pos:
 	.long 0
 
 joy0state:
-	.long 0
+	.byte 0
 joy1state:
-	.long 0
+	.byte 0
+	.skip 2
 
 rlud2udlr:	.byte 0x00,0x08,0x04,0x0C, 0x01,0x09,0x05,0x0D, 0x02,0x0A,0x06,0x0E, 0x03,0x0B,0x07,0x0F
 
