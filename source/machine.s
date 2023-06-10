@@ -15,7 +15,7 @@
 	.align 2
 ;@----------------------------------------------------------------------------
 machineReset:
-	.type   machineReset STT_FUNC
+	.type machineReset STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
@@ -26,7 +26,7 @@ machineReset:
 	bic m6502zpage,m6502zpage,#0x1FC
 	str m6502zpage,[r0]
 
-	bl Mem_reset
+	bl memReset
 	bl gfxReset
 	bl IO_reset
 //	bl SOUND_reset
@@ -35,7 +35,7 @@ machineReset:
 	ldmfd sp!,{r4-r11,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
-Mem_reset:
+memReset:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 	mov r2,#0xFF

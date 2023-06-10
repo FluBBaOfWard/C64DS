@@ -1,5 +1,6 @@
 #include "equates.h"
 #include "memory.h"
+#include "ARM6526/ARM6526.i"
 #include "ARM6502/M6502.i"
 
 	.global IO_reset
@@ -25,6 +26,7 @@
 ;@----------------------------------------------------------------------------
 IO_reset:
 ;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
 	mov r0,#0
 	add r2,r10,#cia_base_offset
 	mov r1,#47
@@ -42,6 +44,11 @@ cialoop:
 	str r0,[r10,#timer2a]
 	str r0,[r10,#timer2b]
 
+	ldr r0,=cia1Base
+	bl m6526Init
+	ldr r0,=cia2Base
+	bl m6526Init
+	ldmfd sp!,{lr}
 	bx lr
 ;@----------------------------------------------------------------------------
 IO_R:		;@ I/O read, 0xD000-0xDFFF
@@ -585,6 +592,11 @@ Keyb_trans:	;@ Which row and bit should be affected.
 	.section .text
 #endif
 	.align 2
+
+cia1Base:
+	.skip m6526Size
+cia2Base:
+	.skip m6526Size
 					;@ !!! Something MUST be referenced here, otherwise the compiler scraps it !!!
 CIA1State:
 	.byte 0 ;@ cia1porta
