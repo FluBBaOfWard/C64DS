@@ -340,8 +340,8 @@ scaleLoop:
 vblIrqHandler:
 	.type vblIrqHandler STT_FUNC
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r11,lr}  ;@ Save registers on stack
-
+	stmfd sp!,{r4-r11,lr}
+	bl calculateFPS
 
 	ldr r6,gFlicker
 	eors r6,r6,r6,lsl#31
@@ -351,10 +351,10 @@ vblIrqHandler:
 	ldr r3,[r3]
 	ldr r4,=dma_buffer0
 	
-	ldr r1,=0x010B			;@ Y-delta
+	ldr r1,=0x010B				;@ Y-delta
 	mov r5,#0
 	moveq r5,#0x000B
-//	mov r7,r5				;@ Y-Offset
+//	mov r7,r5					;@ Y-Offset
 	mov r8,#0
 	moveq r8,#0x0040
 	mov r2,#192
@@ -380,43 +380,42 @@ loop1:
 
 	mov r12,#REG_BASE
 	tst r6,#0x80000000
-	mov r0,#0x0B00							;@ 11 pixels offset.
+	mov r0,#0x0B00				;@ 11 pixels offset.
 	addeq r0,r0,#0x000B
 	strh r0,[r12,#REG_BG2Y]
 	strh r0,[r12,#REG_BG3Y]
-	mov r0,#0x14000							;@ 320<<8
+	mov r0,#0x14000				;@ 320<<8
 	addeq r0,r0,#0x00008
 	str r0,[r12,#REG_BG3X]
 
 	ldr r0,=bg2_ptr1
 	ldr r0,[r0]
 	and r0,r0,#0x20000
-	ldrh r1,[r12,#REG_BG2CNT]				;@ Switch bg2 buffers
+	ldrh r1,[r12,#REG_BG2CNT]	;@ Switch bg2 buffers
 	bic r1,r1,#0x800
 	orr r1,r1,r0,lsr#6
 	strh r1,[r12,#REG_BG2CNT]
 	strh r1,[r12,#REG_BG3CNT]
 
 	mov r0,#0
-	str r0,[r12,#REG_DMA2CNT]				;@ Stop DMA2
+	str r0,[r12,#REG_DMA2CNT]	;@ Stop DMA2
 
-	ldr r1,=obj_buf_ptr1
-	ldr r1,[r1]
-	ldr r2,=0x07000000
-	ldr r3,=0x84000100
-	str r1,[r12,#REG_DMA3SAD]
-	str r2,[r12,#REG_DMA3DAD]
-	str r3,[r12,#REG_DMA3CNT]			;@ DMA3 Go!
+	add r1,r12,#REG_DMA3SAD
+	ldr r2,=obj_buf_ptr1
+	ldr r2,[r2]
+	mov r3,#OAM					;@ DMA3 dst
+	mov r4,#0x84000000			;@ noIRQ 32bit incsrc incdst
+	orr r4,r4,#128*2			;@ 128 sprites * 2 longwords
+	stmia r1,{r2-r4}			;@ DMA3 go
 
 	ldr r1,=dma_buffer0
-	add r2,r12,#REG_BG2HOFS
-	ldr r3,=0x96600001						;@ 1 word(s)
-	ldr r0,[r1],#4							;@ Change this if you change number of words transfered!
+	add r2,r12,#REG_BG2X
+	ldr r3,=0x96600001			;@ 1 word(s)
+	ldr r0,[r1],#4				;@ Change this if you change number of words transfered!
 	str r0,[r2]
 	str r1,[r12,#REG_DMA2SAD]
 	str r2,[r12,#REG_DMA2DAD]
-	str r3,[r12,#REG_DMA2CNT]				;@ DMA2 Go!
-
+	str r3,[r12,#REG_DMA2CNT]	;@ DMA2 Go!
 
 ;@----------------- GUI screen -------------------
 	add r12,r12,#0x1000							;@ SUB gfx

@@ -8,12 +8,10 @@
 #include "Gui.h"
 #include "FileHandling.h"
 #include "EmuFont.h"
-
 #include "cpu.h"
 #include "Gfx.h"
 #include "io.h"
 #include "Sound.h"
-#include "cia_tod.h"
 
 extern void machineReset(void);
 
@@ -68,7 +66,6 @@ void myVblank(void) {
 	vBlankOverflow = true;
 //	DC_FlushRange(EMUPALBUFF, 0x400);
 	vblIrqHandler();
-	CIA_TOD_Count();
 }
 
 
@@ -90,7 +87,6 @@ int main(int argc, char **argv) {
 //	machineInit();
 	// Clear DS VRAM and calculate LUTs.
 	gfxInit();
-	CIA_TOD_Init();
 	machineReset();
 //	loadCart(0,0);
 	if ( initFileHelper() ) {

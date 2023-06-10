@@ -45,6 +45,7 @@ runStart:
 	ldr m6502ptr,=m6502_0
 	add r0,m6502ptr,#m6502Regs
 	ldmia r0,{m6502nz-m6502pc,m6502zpage}	;@ Restore M6502 state
+	bl ciaTodCount
 	bl newFrame					;@ Display update
 
 ;@----------------------------------------------------------------------------

@@ -8,6 +8,7 @@
 	.global IO_W
 	.global CIA1_TOD_Base
 	.global CIA2_TOD_Base
+	.global ciaTodCount
 	.global refreshEMUjoypads
 	.global SetC64Key
 
@@ -46,10 +47,29 @@ cialoop:
 
 	ldr r0,=cia1Base
 	bl m6526Init
+	ldr r1,=joy2KeybRead
+	str r1,[r0,#ciaPortAReadFunc]
+	ldr r1,=joy1KeybRead
+	str r1,[r0,#ciaPortBReadFunc]
+
 	ldr r0,=cia2Base
 	bl m6526Init
+	ldr r1,=SetC64GfxBases
+	str r1,[r0,#ciaPortAWriteFunc]
+
 	ldmfd sp!,{lr}
 	bx lr
+;@----------------------------------------------------------------------------
+ciaTodCount:
+	.type ciaTodCount STT_FUNC
+;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+	ldr r0,=cia1Base
+	bl m6526CountFrames
+	ldmfd sp!,{lr}
+	ldr r0,=cia2Base
+	b m6526CountFrames
+
 ;@----------------------------------------------------------------------------
 IO_R:		;@ I/O read, 0xD000-0xDFFF
 ;@----------------------------------------------------------------------------
@@ -107,6 +127,7 @@ IO_W:		;@ I/O write, 0xD000-0xDFFF
 ;@----------------------------------------------------------------------------
 CIA1_R:
 //	mov r11,r11
+	ldr r2,=cia1Base
 	and r1,addy,#0xF
 	ldr pc,[pc,r1,lsl#2]
 ;@---------------------------
@@ -120,10 +141,10 @@ CIA1_R:
 	.long CIA1_TimerA_H_R	;@ 0xDC05
 	.long CIA1_TimerB_L_R	;@ 0xDC06
 	.long CIA1_TimerB_H_R	;@ 0xDC07
-	.long CIA1_TOD_F_R		;@ 0xDD08
-	.long CIA1_TOD_S_R		;@ 0xDD09
-	.long CIA1_TOD_M_R		;@ 0xDD0A
-	.long CIA1_TOD_H_R		;@ 0xDD0B
+	.long m6526Read			;@ 0xDD08
+	.long m6526Read			;@ 0xDD09
+	.long m6526Read			;@ 0xDD0A
+	.long m6526Read			;@ 0xDD0B
 	.long CIA1_empty_R		;@ 0xDC0C
 	.long CIA1_IRQCTRL_R	;@ 0xDC0D
 	.long CIA1_empty_R		;@ 0xDC0E
@@ -136,6 +157,7 @@ CIA1_empty_R:
 ;@----------------------------------------------------------------------------
 CIA1_W:
 //	mov r11,r11
+	ldr r2,=cia1Base
 	and r1,addy,#0xF
 	ldr pc,[pc,r1,lsl#2]
 ;@---------------------------
@@ -149,10 +171,10 @@ CIA1_W:
 	.long CIA1_TimerA_H_W	;@ 0xDC05
 	.long CIA1_empty_W		;@ 0xDC06
 	.long CIA1_TimerB_H_W	;@ 0xDC07
-	.long CIA1_TOD_F_W		;@ 0xDC08
-	.long CIA1_TOD_S_W		;@ 0xDC09
-	.long CIA1_TOD_M_W		;@ 0xDC0A
-	.long CIA1_TOD_H_W		;@ 0xDC0B
+	.long m6526Write		;@ 0xDC08
+	.long m6526Write		;@ 0xDC09
+	.long m6526Write		;@ 0xDC0A
+	.long m6526Write		;@ 0xDC0B
 	.long CIA1_empty_W		;@ 0xDC0C
 	.long CIA1_IRQCTRL_W	;@ 0xDC0D
 	.long CIA1_CTRLA_W		;@ 0xDC0E
@@ -164,6 +186,7 @@ CIA1_empty_W:
 ;@----------------------------------------------------------------------------
 CIA2_R:
 //	mov r11,r11
+	ldr r2,=cia2Base
 	and r1,addy,#0xF
 	ldr pc,[pc,r1,lsl#2]
 ;@---------------------------
@@ -177,10 +200,10 @@ CIA2_R:
 	.long CIA2_TimerA_H_R	;@ 0xDD05
 	.long CIA2_TimerB_L_R	;@ 0xDD06
 	.long CIA2_TimerB_H_R	;@ 0xDD07
-	.long CIA2_TOD_F_R		;@ 0xDD08
-	.long CIA2_TOD_S_R		;@ 0xDD09
-	.long CIA2_TOD_M_R		;@ 0xDD0A
-	.long CIA2_TOD_H_R		;@ 0xDD0B
+	.long m6526Read			;@ 0xDD08
+	.long m6526Read			;@ 0xDD09
+	.long m6526Read			;@ 0xDD0A
+	.long m6526Read			;@ 0xDD0B
 	.long CIA2_empty_R		;@ 0xDD0C
 	.long CIA2_empty_R		;@ 0xDD0D
 	.long CIA2_empty_R		;@ 0xDD0E
@@ -193,6 +216,7 @@ CIA2_empty_R:
 ;@----------------------------------------------------------------------------
 CIA2_W:
 //	mov r11,r11
+	ldr r2,=cia2Base
 	and r1,addy,#0xF
 	ldr pc,[pc,r1,lsl#2]
 ;@---------------------------
@@ -206,10 +230,10 @@ CIA2_W:
 	.long CIA2_empty_W		;@ 0xDD05
 	.long CIA2_empty_W		;@ 0xDD06
 	.long CIA2_empty_W		;@ 0xDD07
-	.long CIA2_TOD_F_W		;@ 0xDD08
-	.long CIA2_TOD_S_W		;@ 0xDD09
-	.long CIA2_TOD_M_W		;@ 0xDD0A
-	.long CIA2_TOD_H_W		;@ 0xDD0B
+	.long m6526Write		;@ 0xDD08
+	.long m6526Write		;@ 0xDD09
+	.long m6526Write		;@ 0xDD0A
+	.long m6526Write		;@ 0xDD0B
 	.long CIA2_empty_W		;@ 0xDD0C
 	.long CIA2_empty_W		;@ 0xDD0D
 	.long CIA2_empty_W		;@ 0xDD0E
@@ -410,6 +434,31 @@ IO_RES1_W:
 	mov r0,#0xFF
 	bx lr
 
+;@----------------------------------------------------------------------------
+joy2KeybRead:				;@ 0xDC00 Joy2/Keyboard, r2 = cia
+;@----------------------------------------------------------------------------
+	ldrb r0,joy0state
+//	ldrb r0,[r2,#ciaDataDirA]
+	eor r0,r0,#0xFF
+	bx lr
+;@----------------------------------------------------------------------------
+joy1KeybRead:				;@ 0xDC01 Joy1/Keyboard, r2 = cia
+;@----------------------------------------------------------------------------
+	ldrb r2,[r2,#ciaDataPortA]
+	eor r2,r2,#0xFF
+	adr addy,Keyboard_M
+	mov r0,#0xFF
+portBLoop:
+	movs r2,r2,lsr#1
+	ldrcsb r1,[addy]
+	andcs r0,r0,r1
+	add addy,addy,#1
+	bne portBLoop
+	ldrb r1,joy1state
+	eor r1,r1,#0xFF
+	and r0,r0,r1
+
+	bx lr
 ;@----------------------------------------------------------------------------
 refreshEMUjoypads:			;@ Call every frame
 ;@----------------------------------------------------------------------------

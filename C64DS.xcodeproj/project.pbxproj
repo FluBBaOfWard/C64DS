@@ -38,8 +38,6 @@
 		9CA4420D2A2CFB3600259966 /* io.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = io.s; sourceTree = "<group>"; };
 		9CA4420E2A2CFB3600259966 /* memory.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = memory.s; sourceTree = "<group>"; };
 		9CA4420F2A2CFB3600259966 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memory.h; sourceTree = "<group>"; };
-		9CA442102A2CFB3600259966 /* cia_tod.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = cia_tod.s; sourceTree = "<group>"; };
-		9CA442112A2CFB3600259966 /* cia_tod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cia_tod.h; sourceTree = "<group>"; };
 		9CA442142A2CFB3600259966 /* equates.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = equates.h; sourceTree = "<group>"; };
 		9CA442162A2CFB4F00259966 /* C64Keyboard.grit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = C64Keyboard.grit; sourceTree = "<group>"; };
 		9CA442172A2CFB4F00259966 /* C64Keyboard.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = C64Keyboard.png; sourceTree = "<group>"; };
@@ -115,8 +113,6 @@
 				9CA441E62A2CFB3600259966 /* Gui.c */,
 				9CA4422A2A2D1D9C00259966 /* FileHandling.h */,
 				9CA442292A2D1D9C00259966 /* FileHandling.c */,
-				9CA442112A2CFB3600259966 /* cia_tod.h */,
-				9CA442102A2CFB3600259966 /* cia_tod.s */,
 				9CA441E72A2CFB3600259966 /* machine.s */,
 				9CA4422D2A2D23A800259966 /* cpu.h */,
 				9CA4420C2A2CFB3600259966 /* cpu.s */,
@@ -146,8 +142,8 @@
 				9CA441EE2A2CFB3600259966 /* FileHelper.c */,
 				9CA442032A2CFB3600259966 /* crc32.h */,
 				9CA441F72A2CFB3600259966 /* crc32.c */,
-				9CA441F92A2CFB3600259966 /* AsmExtra.s */,
 				9CA441FC2A2CFB3600259966 /* AsmExtra.h */,
+				9CA441F92A2CFB3600259966 /* AsmExtra.s */,
 				9CA441EC2A2CFB3600259966 /* EmubaseAC.h */,
 			);
 			path = Shared;
