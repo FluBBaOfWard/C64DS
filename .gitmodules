@@ -7,3 +7,6 @@
 [submodule "source/ARM6581"]
 	path = source/ARM6581
 	url = https://github.com/FluBBaOfWard/ARM6581.git
+[submodule "source/ARM6526"]
+	path = source/ARM6526
+	url = https://github.com/FluBBaOfWard/ARM6526.git

@@ -28,7 +28,8 @@ SOURCES		:=	source	\
 				source/Shared \
 				source/Shared/Unzip \
 				source/ARM6502 \
-				source/ARM6581
+				source/ARM6581 \
+				source/ARM6526
 DATA		:=	data
 INCLUDES	:=	include
 GRAPHICS	:=	source/Shared/graphics \

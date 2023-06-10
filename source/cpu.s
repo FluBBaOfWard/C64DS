@@ -8,13 +8,13 @@
 	.global stepFrame
 	.global cpuInit
 	.global cpuReset
-	.global irq_scanlinehook
 
 	.global frameTotal
 	.global waitMaskIn
 	.global waitMaskOut
 	.global wram_global_base
 
+	.syntax unified
 	.arm
 
 #ifdef GBA
@@ -45,7 +45,7 @@ runStart:
 	ldr m6502ptr,=m6502_0
 	add r0,m6502ptr,#m6502Regs
 	ldmia r0,{m6502nz-m6502pc,m6502zpage}	;@ Restore M6502 state
-	bl newframe					;@ Display update
+	bl newFrame					;@ Display update
 
 ;@----------------------------------------------------------------------------
 c64FrameLoop:
@@ -53,7 +53,7 @@ c64FrameLoop:
 	mov r0,#63
 	bl m6502RunXCycles
 	ldr r1,[r10,#scanline]
-	bl irq_scanlinehook
+	bl irqScanlineHook
 
 	ldr r1,[r10,#scanline]
 	add r1,r1,#1
@@ -62,7 +62,7 @@ c64FrameLoop:
 	cmp r1,r0
 	bne c64FrameLoop
 ;@-------------------------------------------------
-	bl endframe					;@ Display update
+	bl endFrame					;@ Display update
 ;@-------------------------------------------------
 	add r0,m6502ptr,#m6502Regs
 	stmia r0,{m6502nz-m6502pc}	;@ Save 6502 state
@@ -80,17 +80,19 @@ c64FrameLoop:
 	add r0,r0,#1
 	ands r0,r0,r0,lsr#8
 	strb r0,waitCountOut
-	ldmeqfd sp!,{r4-r11,lr}		;@ Exit here if doing single frame:
+	ldmfdeq sp!,{r4-r11,lr}		;@ Exit here if doing single frame:
 	bxeq lr						;@ Return to rommenu()
 	b runStart
 
 ;@----------------------------------------------------------
-frameTotal:			.long 0		;@ Let ui.c see frame count for savestates
+frameTotal:			.long 0		;@ Let Gui.c see frame count for savestates
 waitCountIn:		.byte 0
 waitMaskIn:			.byte 0
 waitCountOut:		.byte 0
 waitMaskOut:		.byte 0
-
+irqPinStatus:		.byte 0
+nmiPinStatus:		.byte 0
+	.align 2
 ;@----------------------------------------------------------------------------
 stepFrame:					;@ Return after 1 frame
 	.type stepFrame STT_FUNC
@@ -99,14 +101,14 @@ stepFrame:					;@ Return after 1 frame
 	ldr m6502ptr,=m6502_0
 	add r0,m6502ptr,#m6502Regs
 	ldmia r0,{m6502nz-m6502pc,m6502zpage}	;@ Restore M6502 state
-	bl newframe					;@ Display update
+	bl newFrame					;@ Display update
 ;@----------------------------------------------------------------------------
 c64StepLoop:
 ;@----------------------------------------------------------------------------
 	mov r0,#63
 	bl m6502RunXCycles
 	ldr r1,[r10,#scanline]
-	bl irq_scanlinehook
+	bl irqScanlineHook
 
 	ldr r1,[r10,#scanline]
 	add r1,r1,#1
@@ -115,7 +117,7 @@ c64StepLoop:
 	cmp r1,r0
 	bne c64StepLoop
 ;@-------------------------------------------------
-	bl endframe					;@ Display update
+	bl endFrame					;@ Display update
 ;@-------------------------------------------------
 	add r0,m6502ptr,#m6502Regs
 	stmia r0,{m6502nz-m6502pc}	;@ Save 6502 state
@@ -127,7 +129,7 @@ c64StepLoop:
 	ldmfd sp!,{r4-r11,lr}
 	bx lr
 ;@----------------------------------------------------------
-irq_scanlinehook:
+irqScanlineHook:
 ;@----------------------------------------------------------
 	stmfd sp!,{lr}
 	bl RenderLine
@@ -144,7 +146,7 @@ ScanlineTimerA1:
 	orr r0,r0,#1
 	strb r0,[r10,#cia1irq]
 
-	tst r1,#0x08				;@ Continuous/oneshoot?
+	tst r1,#0x08				;@ Contigous/oneshoot?
 	ldreqb r0,[r10,#cia1timeral]
 	ldreqb r1,[r10,#cia1timerah]
 	orreq r0,r0,r1,lsl#8
@@ -155,24 +157,24 @@ noTimerA1:
 TimerA1Disabled:
 
 VICRasterCheck:
-	ldrb r0,[r10,#vicraster]
-	ldrb r1,[r10,#vicctrl1]
+	ldrb r0,[r10,#vicRaster]
+	ldrb r1,[r10,#vicCtrl1]
 	tst r1,#0x80
 	orrne r0,r0,#0x100
 	ldr r1,[r10,#scanline]
 	cmp r0,r1
-	bne norasterirq
-	ldrb r0,[r10,#vicirqflag]
+	bne noRasterIrq
+	ldrb r0,[r10,#vicIrqFlag]
 	orr r0,r0,#1
-	strb r0,[r10,#vicirqflag]
-norasterirq:
+	strb r0,[r10,#vicIrqFlag]
+noRasterIrq:
 
 	ldrb r2,[r10,#cia1irqctrl]
 	ldrb r1,[r10,#cia1irq]
 	ands r0,r2,r1
 	movne r0,#0x01			;@ Normal interrupt (CIA1)
-	ldrb r2,[r10,#vicirqenable]
-	ldrb r1,[r10,#vicirqflag]
+	ldrb r2,[r10,#vicIrqEnable]
+	ldrb r1,[r10,#vicIrqFlag]
 	ands r2,r2,r1
 	orrne r0,r0,#0x01		;@ Normal interrupt (VIC)
 
@@ -181,6 +183,47 @@ norasterirq:
 	ldmfd sp!,{lr}
 	bx lr
 
+;@----------------------------------------------------------------------------
+setVicIrq:			;@ r0 = irq status, m6502ptr = r10 = pointer to struct
+;@----------------------------------------------------------------------------
+	cmp r0,#0
+	ldrb r0,irqPinStatus
+	biceq r0,r0,#0x01
+	orrne r0,r0,#0x01
+	strb r0,irqPinStatus
+	b m6502SetIRQPin
+;@----------------------------------------------------------------------------
+setCia1Irq:			;@ r0 = irq status, m6502ptr = r10 = pointer to struct
+;@----------------------------------------------------------------------------
+	cmp r0,#0
+	ldrb r0,irqPinStatus
+	biceq r0,r0,#0x02
+	orrne r0,r0,#0x02
+	strb r0,irqPinStatus
+	b m6502SetIRQPin
+;@----------------------------------------------------------------------------
+setCia2Nmi:			;@ r0 = nmi status, m6502ptr = r10 = pointer to struct
+;@----------------------------------------------------------------------------
+	cmp r0,#0
+	ldrb r0,nmiPinStatus
+	biceq r0,r0,#0x01
+	orrne r0,r0,#0x01
+	strb r0,nmiPinStatus
+	b m6502SetNMIPin
+;@----------------------------------------------------------------------------
+setKeybNmi:			;@ r0 = nmi status, m6502ptr = r10 = pointer to struct
+;@----------------------------------------------------------------------------
+	cmp r0,#0
+	ldrb r0,nmiPinStatus
+	biceq r0,r0,#0x02
+	orrne r0,r0,#0x02
+	strb r0,nmiPinStatus
+	b m6502SetNMIPin
+;@----------------------------------------------------------------------------
+cpuInit:					;@ Called by machineInit
+;@----------------------------------------------------------------------------
+	ldr r0,=m6502_0
+	b m6502Init
 ;@----------------------------------------------------------------------------
 cpuReset:		;@ Called by loadCart/resetGame
 ;@----------------------------------------------------------------------------

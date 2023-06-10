@@ -8,6 +8,8 @@ extern "C" {
 extern u32 joyCfg;
 extern u32 EMUinput;
 
+void SetC64Key(int x, int y, bool touch);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

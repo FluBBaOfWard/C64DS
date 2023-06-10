@@ -16,6 +16,9 @@
 	.global mytouch_y
 	.global mytouch_press
 	.global keyb_pos
+	.global Keyboard_M
+	.global joy0state
+	.global joy1state
 
 	.section .text
 	.align 2

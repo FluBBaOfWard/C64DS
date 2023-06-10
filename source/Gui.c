@@ -12,7 +12,7 @@
 #include "cpu.h"
 #include "ARM6502/Version.h"
 
-#define EMUVERSION "V0.1.0 2023-05-08"
+#define EMUVERSION "V0.2.0 2023-06-10"
 
 #define ENABLE_LIVE_UI		(1<<12)
 #define ALLOW_SPEED_HACKS	(1<<17)
