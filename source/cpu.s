@@ -1,6 +1,7 @@
 #ifdef __arm__
 
 #include "Shared/nds_asm.h"
+#include "ARM6526/ARM6526.i"
 #include "ARM6502/M6502.i"
 #include "equates.h"
 
@@ -135,26 +136,27 @@ irqScanlineHook:
 	stmfd sp!,{lr}
 	bl RenderLine
 
+	ldr r2,=cia1Base
 ScanlineTimerA1:
-	ldrb r1,[r10,#cia1ctrla]
+	ldrb r1,[r2,#ciaCtrlTA]
 	tst r1,#0x01				;@ Timera1 active?
 	beq TimerA1Disabled
 //	tst r1,#0x20				;@ Count 02 clock or CNT signals?
-	ldr r2,[r10,#timer1a]
-	subs r2,r2,#63
+	ldr r12,[r2,#ciaTimerACount]
+	subs r12,r12,#63
 	bcs noTimerA1
-	ldrb r0,[r10,#cia1irq]		;@ Set cia1 timera irq
+	ldrb r0,[r2,#ciaIrq]		;@ Set cia1 timera irq
 	orr r0,r0,#1
-	strb r0,[r10,#cia1irq]
+	strb r0,[r2,#ciaIrq]
 
 	tst r1,#0x08				;@ Contigous/oneshoot?
-	ldreqb r0,[r10,#cia1timeral]
-	ldreqb r1,[r10,#cia1timerah]
+	ldreqb r0,[r2,#ciaTimerAL]
+	ldreqb r1,[r2,#ciaTimerAH]
 	orreq r0,r0,r1,lsl#8
-	addeq r2,r2,r0
-	movne r2,#-1
+	addeq r12,r12,r0
+	movne r12,#-1
 noTimerA1:
-	str r2,[r10,#timer1a]
+	str r12,[r2,#ciaTimerACount]
 TimerA1Disabled:
 
 VICRasterCheck:
@@ -170,13 +172,13 @@ VICRasterCheck:
 	strb r0,[r10,#vicIrqFlag]
 noRasterIrq:
 
-	ldrb r2,[r10,#cia1irqctrl]
-	ldrb r1,[r10,#cia1irq]
-	ands r0,r2,r1
+	ldrb r12,[r2,#ciaIrqCtrl]
+	ldrb r1,[r2,#ciaIrq]
+	ands r0,r12,r1
 	movne r0,#0x01			;@ Normal interrupt (CIA1)
-	ldrb r2,[r10,#vicIrqEnable]
+	ldrb r12,[r10,#vicIrqEnable]
 	ldrb r1,[r10,#vicIrqFlag]
-	ands r2,r2,r1
+	ands r12,r12,r1
 	orrne r0,r0,#0x01		;@ Normal interrupt (VIC)
 
 	bl m6502SetIRQPin
@@ -251,7 +253,7 @@ cpuReset:		;@ Called by loadCart/resetGame
 wram_global_base:
 m6502_0:
 	.space m6502Size
-	.space 0x180
+	.space vicSize
 ;@----------------------------------------------------------------------------
 	.end
 #endif // #ifdef __arm__

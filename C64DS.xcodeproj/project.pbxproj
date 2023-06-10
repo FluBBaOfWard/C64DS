@@ -63,7 +63,7 @@
 		9CA442312A2E1AE000259966 /* ARM6581.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = ARM6581.i; sourceTree = "<group>"; };
 		9CA442322A2E1AE000259966 /* ARM6581.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = ARM6581.s; sourceTree = "<group>"; };
 		9CA442332A2E1AE000259966 /* ARM6581.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ARM6581.h; sourceTree = "<group>"; };
-		9CA442342A2E1AE000259966 /* SID6581_todo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SID6581_todo.txt; sourceTree = "<group>"; };
+		9CA442342A2E1AE000259966 /* ARM6581_todo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ARM6581_todo.txt; sourceTree = "<group>"; };
 		9CA442352A2E1AE000259966 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		9CA442362A2E1AE000259966 /* History.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = History.txt; sourceTree = "<group>"; };
 		9CA442382A34756E00259966 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -72,7 +72,7 @@
 		9CA4423B2A3475AC00259966 /* Version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Version.h; sourceTree = "<group>"; };
 		9CA4423C2A3475AC00259966 /* ARM6526.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = ARM6526.i; sourceTree = "<group>"; };
 		9CA4423D2A3475AC00259966 /* History.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = History.txt; sourceTree = "<group>"; };
-		9CA4423E2A3475AC00259966 /* CIA6526_todo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CIA6526_todo.txt; sourceTree = "<group>"; };
+		9CA4423E2A3475AC00259966 /* ARM6526_todo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ARM6526_todo.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -198,7 +198,7 @@
 			isa = PBXGroup;
 			children = (
 				9CA442352A2E1AE000259966 /* README.md */,
-				9CA442342A2E1AE000259966 /* SID6581_todo.txt */,
+				9CA442342A2E1AE000259966 /* ARM6581_todo.txt */,
 				9CA442362A2E1AE000259966 /* History.txt */,
 				9CA442302A2E1AE000259966 /* Version.h */,
 				9CA442332A2E1AE000259966 /* ARM6581.h */,
@@ -212,7 +212,7 @@
 			isa = PBXGroup;
 			children = (
 				9CA442382A34756E00259966 /* README.md */,
-				9CA4423E2A3475AC00259966 /* CIA6526_todo.txt */,
+				9CA4423E2A3475AC00259966 /* ARM6526_todo.txt */,
 				9CA4423D2A3475AC00259966 /* History.txt */,
 				9CA4423B2A3475AC00259966 /* Version.h */,
 				9CA4423A2A3475AC00259966 /* ARM6526.h */,

@@ -1,13 +1,11 @@
-#include "equates.h"
-#include "memory.h"
+#ifdef __arm__
+
 #include "ARM6526/ARM6526.i"
 #include "ARM6502/M6502.i"
 
 	.global IO_reset
 	.global IO_R
 	.global IO_W
-	.global CIA1_TOD_Base
-	.global CIA2_TOD_Base
 	.global ciaTodCount
 	.global refreshEMUjoypads
 	.global SetC64Key
@@ -21,6 +19,11 @@
 	.global Keyboard_M
 	.global joy0state
 	.global joy1state
+	.global cia1Base
+	.global cia2Base
+
+	.syntax unified
+	.arm
 
 	.section .text
 	.align 2
@@ -28,22 +31,6 @@
 IO_reset:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	mov r0,#0
-	add r2,r10,#cia_base_offset
-	mov r1,#47
-cialoop:
-	strb r0,[r2,r1]
-	subs r1,r1,#1
-	bpl cialoop
-	strb r0,[r10,#cia1irq]
-
-	mov r0,#0x01				;@ TimerA1 enabled?
-	strb r0,[r10,#cia1irqctrl]
-	mov r0,#-1
-	str r0,[r10,#timer1a]
-	str r0,[r10,#timer1b]
-	str r0,[r10,#timer2a]
-	str r0,[r10,#timer2b]
 
 	ldr r0,=cia1Base
 	bl m6526Init
@@ -73,13 +60,12 @@ ciaTodCount:
 ;@----------------------------------------------------------------------------
 IO_R:		;@ I/O read, 0xD000-0xDFFF
 ;@----------------------------------------------------------------------------
-//	mov r11,r11
 	cmp addy,#0xD000
 	andpl r1,addy,#0xF00
 	ldrpl pc,[pc,r1,lsr#6]
 	b ram_R
 ;@---------------------------
-//io_read_tbl
+// io_read_tbl
 	.long VIC_R				;@ 0xD000
 	.long VIC_R				;@ 0xD100
 	.long VIC_R				;@ 0xD200
@@ -100,13 +86,12 @@ IO_R:		;@ I/O read, 0xD000-0xDFFF
 ;@----------------------------------------------------------------------------
 IO_W:		;@ I/O write, 0xD000-0xDFFF
 ;@----------------------------------------------------------------------------
-//	mov r11,r11
 	cmp addy,#0xD000
 	andpl r1,addy,#0xF00
 	ldrpl pc,[pc,r1,lsr#6]
 	b ram_W
 ;@---------------------------
-//io_read_tbl
+// io_read_tbl
 	.long VIC_W				;@ 0xD000
 	.long VIC_W				;@ 0xD100
 	.long VIC_W				;@ 0xD200
@@ -126,278 +111,20 @@ IO_W:		;@ I/O write, 0xD000-0xDFFF
 
 ;@----------------------------------------------------------------------------
 CIA1_R:
-//	mov r11,r11
 	ldr r2,=cia1Base
-	and r1,addy,#0xF
-	ldr pc,[pc,r1,lsl#2]
-;@---------------------------
-	.long 0
-//cia1_read_tbl
-	.long CIA1_PortA_R		;@ 0xDC00
-	.long CIA1_PortB_R		;@ 0xDC01
-	.long CIA1_empty_R		;@ 0xDC02
-	.long CIA1_empty_R		;@ 0xDC03
-	.long CIA1_TimerA_L_R	;@ 0xDC04
-	.long CIA1_TimerA_H_R	;@ 0xDC05
-	.long CIA1_TimerB_L_R	;@ 0xDC06
-	.long CIA1_TimerB_H_R	;@ 0xDC07
-	.long m6526Read			;@ 0xDD08
-	.long m6526Read			;@ 0xDD09
-	.long m6526Read			;@ 0xDD0A
-	.long m6526Read			;@ 0xDD0B
-	.long CIA1_empty_R		;@ 0xDC0C
-	.long CIA1_IRQCTRL_R	;@ 0xDC0D
-	.long CIA1_empty_R		;@ 0xDC0E
-	.long CIA1_empty_R		;@ 0xDC0F
-CIA1_empty_R:
-	add r2,r10,#cia1_base_offset
-	ldrb r0,[r2,r1]
-	bx lr
-	ldr r2,=CIA1State
+	b m6526Read
 ;@----------------------------------------------------------------------------
 CIA1_W:
-//	mov r11,r11
 	ldr r2,=cia1Base
-	and r1,addy,#0xF
-	ldr pc,[pc,r1,lsl#2]
-;@---------------------------
-	.long 0
-//cia1_write_tbl
-	.long CIA1_empty_W		;@ 0xDC00
-	.long CIA1_empty_W		;@ 0xDC01
-	.long CIA1_empty_W		;@ 0xDC02
-	.long CIA1_empty_W		;@ 0xDC03
-	.long CIA1_empty_W		;@ 0xDC04
-	.long CIA1_TimerA_H_W	;@ 0xDC05
-	.long CIA1_empty_W		;@ 0xDC06
-	.long CIA1_TimerB_H_W	;@ 0xDC07
-	.long m6526Write		;@ 0xDC08
-	.long m6526Write		;@ 0xDC09
-	.long m6526Write		;@ 0xDC0A
-	.long m6526Write		;@ 0xDC0B
-	.long CIA1_empty_W		;@ 0xDC0C
-	.long CIA1_IRQCTRL_W	;@ 0xDC0D
-	.long CIA1_CTRLA_W		;@ 0xDC0E
-	.long CIA1_CTRLB_W		;@ 0xDC0F
-CIA1_empty_W:
-	add r2,r10,#cia1_base_offset
-	strb r0,[r2,r1]
-	bx lr
+	b m6526Write
 ;@----------------------------------------------------------------------------
 CIA2_R:
-//	mov r11,r11
 	ldr r2,=cia2Base
-	and r1,addy,#0xF
-	ldr pc,[pc,r1,lsl#2]
-;@---------------------------
-	.long 0xC1A20
-//cia2_read_tbl
-	.long CIA2_empty_R		;@ 0xDD00
-	.long CIA2_empty_R		;@ 0xDD01
-	.long CIA2_empty_R		;@ 0xDD02
-	.long CIA2_empty_R		;@ 0xDD03
-	.long CIA2_TimerA_L_R	;@ 0xDD04
-	.long CIA2_TimerA_H_R	;@ 0xDD05
-	.long CIA2_TimerB_L_R	;@ 0xDD06
-	.long CIA2_TimerB_H_R	;@ 0xDD07
-	.long m6526Read			;@ 0xDD08
-	.long m6526Read			;@ 0xDD09
-	.long m6526Read			;@ 0xDD0A
-	.long m6526Read			;@ 0xDD0B
-	.long CIA2_empty_R		;@ 0xDD0C
-	.long CIA2_empty_R		;@ 0xDD0D
-	.long CIA2_empty_R		;@ 0xDD0E
-	.long CIA2_empty_R		;@ 0xDD0F
-CIA2_empty_R:
-	ldr r2,=cia2_base_offset
-	add r2,r10,r2
-	ldrb r0,[r2,r1]
-	bx lr
+	b m6526Read
 ;@----------------------------------------------------------------------------
 CIA2_W:
-//	mov r11,r11
 	ldr r2,=cia2Base
-	and r1,addy,#0xF
-	ldr pc,[pc,r1,lsl#2]
-;@---------------------------
-	.long 0xC1A21
-//cia2_write_tbl
-	.long CIA2_PORTA_W		;@ 0xDD00
-	.long CIA2_empty_W		;@ 0xDD01
-	.long CIA2_empty_W		;@ 0xDD02
-	.long CIA2_empty_W		;@ 0xDD03
-	.long CIA2_empty_W		;@ 0xDD04
-	.long CIA2_empty_W		;@ 0xDD05
-	.long CIA2_empty_W		;@ 0xDD06
-	.long CIA2_empty_W		;@ 0xDD07
-	.long m6526Write		;@ 0xDD08
-	.long m6526Write		;@ 0xDD09
-	.long m6526Write		;@ 0xDD0A
-	.long m6526Write		;@ 0xDD0B
-	.long CIA2_empty_W		;@ 0xDD0C
-	.long CIA2_empty_W		;@ 0xDD0D
-	.long CIA2_empty_W		;@ 0xDD0E
-	.long CIA2_empty_W		;@ 0xDD0F
-CIA2_empty_W:
-	ldr r2,=cia2_base_offset
-	add r2,r10,r2
-	strb r0,[r2,r1]
-	bx lr
-
-;@----------------------------------------------------------------------------
-CIA2_PORTA_W:
-;@----------------------------------------------------------------------------
-	ldr r2,=cia2_base_offset
-	add r2,r10,r2
-	strb r0,[r2,r1]
-	b SetC64GfxBases
-;@----------------------------------------------------------------------------
-CIA1_TimerA_H_W:			;@ 0xDC05
-;@----------------------------------------------------------------------------
-	strb r0,[r10,#cia1timerah]
-	ldr r1,[r10,#timer1a]
-	tst r1,#0x80000000
-	bmi CIA1_Reload_TA
-	bx lr
-;@----------------------------------------------------------------------------
-CIA1_TimerB_H_W:			;@ 0xDC07
-;@----------------------------------------------------------------------------
-	strb r0,[r10,#cia1timerbh]
-	ldr r1,[r10,#timer1b]
-	tst r1,#0x80000000
-	bmi CIA1_Reload_TB
-	bx lr
-;@----------------------------------------------------------------------------
-CIA1_IRQCTRL_W:				;@ 0xDC0D
-;@----------------------------------------------------------------------------
-//	mov r11,r11
-	ldrb r1,[r10,#cia1irqctrl]
-	tst r0,#0x80
-	and r2,r0,#0x1F
-	biceq r1,r1,r2
-	orrne r1,r1,r2
-	strb r1,[r10,#cia1irqctrl]
-//	b PrepareIRQCheck
-	bx lr
-;@----------------------------------------------------------------------------
-CIA1_CTRLA_W:				;@ 0xDC0E
-;@----------------------------------------------------------------------------
-	strb r0,[r10,#cia1ctrla]
-
-//	tst r0,#0x01					;@ Timer enable?
-//	ldreqb r1,[r10,#cia1irq]
-//	biceq r1,r1,#0x01
-//	streqb r1,[r10,#cia1irq]
-
-	tst r0,#0x10					;@ Force load?
-	bxeq lr
-CIA1_Reload_TA:
-	ldrb r1,[r10,#cia1timeral]
-	ldrb r2,[r10,#cia1timerah]
-	orr r1,r1,r2,lsl#8
-	str r1,[r10,#timer1a]
-	bx lr
-;@----------------------------------------------------------------------------
-CIA1_CTRLB_W:				;@ 0xDC0F
-;@----------------------------------------------------------------------------
-	mov r11,r11
-	strb r0,[r10,#cia1ctrlb]
-
-	tst r0,#0x10					;@ Force load?
-	bxeq lr
-CIA1_Reload_TB:
-	ldrb r1,[r10,#cia1timerbl]
-	ldrb r2,[r10,#cia1timerbh]
-	orr r1,r1,r2,lsl#8
-	str r1,[r10,#timer1b]
-	bx lr
-
-;@----------------------------------------------------------------------------
-CIA1_PortA_R:				;@ 0xDC00 Joy2/Keyboard
-;@----------------------------------------------------------------------------
-//	mov r11,r11					;@ No$GBA debugg
-	ldrb r0,joy0state
-//	ldrb r0,[r10,#cia1ddra]
-	eor r0,r0,#0xFF
-	bx lr
-;@----------------------------------------------------------------------------
-CIA1_PortB_R:				;@ 0xDC01 Joy1/Keyboard
-;@----------------------------------------------------------------------------
-//	mov r11,r11					;@ No$GBA debugg
-	ldrb r2,[r10,#cia1porta]
-	eor r2,r2,#0xFF
-	adr addy,Keyboard_M
-	mov r0,#0xFF
-cia1portbloop:
-	movs r2,r2,lsr#1
-	ldrcsb r1,[addy]
-	andcs r0,r0,r1
-	add addy,addy,#1
-	bne cia1portbloop
-	ldrb r1,joy1state
-	eor r1,r1,#0xFF
-	and r0,r0,r1
-
-	bx lr
-;@----------------------------------------------------------------------------
-CIA1_TimerA_L_R:			;@ 0xDC04
-;@----------------------------------------------------------------------------
-	ldrb r0,[r10,#timer1a]
-	bx lr
-;@----------------------------------------------------------------------------
-CIA1_TimerA_H_R:			;@ 0xDC05
-;@----------------------------------------------------------------------------
-	ldr r0,[r10,#timer1a]
-	mov r0,r0,lsr#8
-	and r0,r0,#0xFF
-	bx lr
-;@----------------------------------------------------------------------------
-CIA1_TimerB_L_R:			;@ 0xDC06
-;@----------------------------------------------------------------------------
-	ldrb r0,[r10,#timer1b]
-	bx lr
-;@----------------------------------------------------------------------------
-CIA1_TimerB_H_R:			;@ 0xDC07
-;@----------------------------------------------------------------------------
-	ldr r0,[r10,#timer1b]
-	mov r0,r0,lsr#8
-	and r0,r0,#0xFF
-	bx lr
-;@----------------------------------------------------------------------------
-CIA1_IRQCTRL_R:				;@ 0xDC0D
-;@----------------------------------------------------------------------------
-//	mov r11,r11
-	ldrb r0,[r10,#cia1irqctrl]
-	ldrb r1,[r10,#cia1irq]
-	ands r0,r0,r1
-	orrne r0,r0,#0x80
-	mov r1,#0
-	strb r1,[r10,#cia1irq]
-	bx lr
-;@----------------------------------------------------------------------------
-CIA2_TimerA_L_R:			;@ 0xDD04
-;@----------------------------------------------------------------------------
-	ldrb r0,[r10,#timer2a]
-	bx lr
-;@----------------------------------------------------------------------------
-CIA2_TimerA_H_R:			;@ 0xDD05
-;@----------------------------------------------------------------------------
-	ldr r0,[r10,#timer2a]
-	mov r0,r0,lsr#8
-	and r0,r0,#0xFF
-	bx lr
-;@----------------------------------------------------------------------------
-CIA2_TimerB_L_R:			;@ 0xDD06
-;@----------------------------------------------------------------------------
-	ldrb r0,[r10,#timer2b]
-	bx lr
-;@----------------------------------------------------------------------------
-CIA2_TimerB_H_R:			;@ 0xDD07
-;@----------------------------------------------------------------------------
-	ldr r0,[r10,#timer2b]
-	mov r0,r0,lsr#8
-	and r0,r0,#0xFF
-	bx lr
+	b m6526Write
 
 ;@----------------------------------------------------------------------------
 VIC_ram_R:
@@ -646,50 +373,8 @@ cia1Base:
 	.skip m6526Size
 cia2Base:
 	.skip m6526Size
-					;@ !!! Something MUST be referenced here, otherwise the compiler scraps it !!!
-CIA1State:
-	.byte 0 ;@ cia1porta
-	.byte 0 ;@ cia1portb
-	.byte 0 ;@ cia1ddra
-	.byte 0 ;@ cia1ddrb
-	.byte 0 ;@ cia1timeral
-	.byte 0 ;@ cia1timerah
-	.byte 0 ;@ cia1timerbl
-	.byte 0 ;@ cia1timerbh
-CIA1_TOD_Base:
-	.byte 0 ;@ cia1tod0
-	.byte 0 ;@ cia1tod1
-	.byte 0 ;@ cia1tod2
-	.byte 0 ;@ cia1tod3
-	.byte 0 ;@ cia1sioport
-	.byte 0 ;@ cia1irqctrl
-	.byte 0 ;@ cia1ctrla
-	.byte 0 ;@ cia1ctrlb
-	.long 0 ;@ timer1a
-	.long 0 ;@ timer1b
-CIA2State:
-	.byte 0 ;@ cia2porta
-	.byte 0 ;@ cia2portb
-	.byte 0 ;@ cia2ddra
-	.byte 0 ;@ cia2ddrb
-	.byte 0 ;@ cia2timeral
-	.byte 0 ;@ cia2timerah
-	.byte 0 ;@ cia2timerbl
-	.byte 0 ;@ cia2timerbh
-CIA2_TOD_Base:
-	.byte 0 ;@ cia2tod0
-	.byte 0 ;@ cia2tod1
-	.byte 0 ;@ cia2tod2
-	.byte 0 ;@ cia2tod3
-	.byte 0 ;@ cia2sioport
-	.byte 0 ;@ cia2irqctrl
-	.byte 0 ;@ cia2ctrla
-	.byte 0 ;@ cia2ctrlb
-	.long 0 ;@ timer2a
-	.long 0 ;@ timer2b
 
-	.byte 0 ;@ cia1irq
-	.byte 0 ;@ cia2nmi
-	.byte 0
-	.byte 0
+;@----------------------------------------------------------------------------
 
+	.end
+#endif // #ifdef __arm__

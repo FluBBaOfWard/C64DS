@@ -1,8 +1,9 @@
 C64 Todo
 
-	Add joystick emulation.
+	Move Timer calculation to ARM6526 class.
 
 GFX:
+	Fix sprites so they are as good as before.
 	See VIC todo.
 
 GUI:
@@ -22,13 +23,9 @@ Misc:
 Games Not Working:
 
 Games Not Working Fixed:
-	Xi Little. Can't start. Waiting on sample playing. Fixed.
 
 Games With Glitches:
-	Mahjong Touryuumon, speed too fast.
 
 Games With Glitches Fixed:
-	Cardcaptor Sakura, book dissolve in intro glitches the second time.
 
 Speedhacks:
-	* Robot Works

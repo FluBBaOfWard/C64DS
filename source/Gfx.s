@@ -1,6 +1,7 @@
 #include "Shared/nds_asm.h"
 #include "equates.h"
 #include "memory.h"
+#include "ARM6526/ARM6526.i"
 #include "ARM6502/M6502mac.h"
 
 	.global vblIrqHandler
@@ -502,8 +503,6 @@ VIC_default_R:
 	ldrb r0,[r2,r1]
 	bx lr
 
-	ldr r2,=VICState			;@ This is needed for the compiler!
-
 ;@----------------------------------------------------------------------------
 VIC_ctrl1_R:		;@ 0xD011
 ;@----------------------------------------------------------------------------
@@ -555,6 +554,7 @@ VIC_palette_R:		;@ 0xD020 -> 0xD02E
 ;@----------------------------------------------------------------------------
 VIC_empty_R:		;@ 0xD02F -> 0xD03F
 ;@----------------------------------------------------------------------------
+	mov r11,r11
 	mov r0,#0xFF
 	bx lr
 
@@ -677,8 +677,8 @@ VIC_irqflag_W:		;@ 0xD019
 SetC64GfxBases:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0,r12}
-
-	ldrb r0,[r10,#cia2porta]	;@ VIC bank, 0x4000*4
+	ldr r2,=cia2Base
+	ldrb r0,[r2,#ciaDataPortA]	;@ VIC bank, 0x4000*4
 	eor r0,r0,#0x03
 	and r0,r0,#0x03
 	ldrb r2,[r10,#vicMemCtrl]	;@ 0xD018
@@ -1171,7 +1171,7 @@ bgrdLoop2:
 	orrmi r4,r4,r4,lsl#8
 
 	addpl r0,lr,r0,lsl#3
-	ldmplia r0,{r1,r2}
+	ldmiapl r0,{r1,r2}
 	movpl r4,r11,lsr#24
 	mulpl r3,r1,r4
 	mulpl r4,r2,r4
@@ -1398,7 +1398,6 @@ RenderSprites:			;@ r0=?, r1=scanline.
 
 	ldrb r9,[r10,#vicSprEnable]
 
-
 	mov r8,#0
 sprLoop:
 	ldrh r0,[r3],#2
@@ -1496,7 +1495,8 @@ VRAM_spr:
 	add r12,r12,#0x3F8
 	ldrb r0,[r12,r8]				;@ Tile nr.
 
-	ldrb r2,[r10,#cia2porta]		;@ VIC bank
+	ldr r2,=cia2Base
+	ldrb r2,[r2,#ciaDataPortA]		;@ VIC bank, 0x4000*4
 	eor r2,r2,#0x03
 	and r2,r2,#0x03
 	add r12,m6502zpage,r2,lsl#14
@@ -1506,9 +1506,8 @@ VRAM_spr:
 	tst r0,r4,lsl r8
 	beq VRAM_spr_mono
 
-
 	ldr r1,=chrDecode2
-	
+
 	mov r4,#24
 	mov r2,#0
 sprLoop2:
@@ -1561,9 +1560,6 @@ sprLoop3:
 	ldmfd sp!,{r1}
 	bx lr
 ;@----------------------------------------------------------------------------
-
-
-
 
 
 	.section .bss
@@ -1629,54 +1625,4 @@ c64_bmp_base:
 	.section .text
 #endif
 	.align 2
-					;@ !!! Something MUST be referenced here, otherwise the compiler scraps it !!!
-VICState:
-	.byte 0 ;@ vicSpr0x			;0xD000
-	.byte 0 ;@ vicSpr0y
-	.byte 0 ;@ vicSpr1x
-	.byte 0 ;@ vicSpr1y
-	.byte 0 ;@ vicSpr2x
-	.byte 0 ;@ vicSpr2y
-	.byte 0 ;@ vicSpr3x
-	.byte 0 ;@ vicSpr3y
-	.byte 0 ;@ vicSpr4x
-	.byte 0 ;@ vicSpr4y
-	.byte 0 ;@ vicSpr5x
-	.byte 0 ;@ vicSpr5y
-	.byte 0 ;@ vicSpr6x
-	.byte 0 ;@ vicSpr6y
-	.byte 0 ;@ vicSpr7x
-	.byte 0 ;@ vicSpr7y
-	.byte 0 ;@ vicSprXPos		;0xD010
-	.byte 0 ;@ vicCtrl1			;0xD011
-	.byte 0 ;@ vicRaster
-	.byte 0 ;@ vicLightPenX
-	.byte 0 ;@ vicLightPenX
-	.byte 0 ;@ vicSprEnable		;0xD015
-	.byte 0 ;@ vicCtrl2
-	.byte 0 ;@ vicSprExpY
-	.byte 0 ;@ vicMemCtrl		;0xD018
-	.byte 0 ;@ vicIrqFlag		;0xD019
-	.byte 0 ;@ vicIrqEnable		;0xD01A
-	.byte 0 ;@ vicSprPrio		;0xD01B
-	.byte 0 ;@ vicSprMode		;0xD01C
-	.byte 0 ;@ vicSprExpX		;0xD01D
-	.byte 0 ;@ vicSprSprCol		;0xD01E
-	.byte 0 ;@ vicSprBgrCol		;0xD01F
-	.byte 0 ;@ vicBrdCol		;0xD020
-	.byte 0 ;@ vicBgr0Col		;0xD021
-	.byte 0 ;@ vicBgr1Col		;0xD022
-	.byte 0 ;@ vicBgr2Col		;0xD023
-	.byte 0 ;@ vicBgr3Col		;0xD024
-	.byte 0 ;@ vicSprM0Col		;0xD025
-	.byte 0 ;@ vicSprM1Col		;0xD026
-	.byte 0 ;@ vicSpr0Col		;0xD027
-	.byte 0 ;@ vicSpr1Col		;0xD028
-	.byte 0 ;@ vicSpr2Col		;0xD029
-	.byte 0 ;@ vicSpr3Col		;0xD02A
-	.byte 0 ;@ vicSpr4Col		;0xD02B
-	.byte 0 ;@ vicSpr5Col		;0xD02C
-	.byte 0 ;@ vicSpr6Col		;0xD02D
-	.byte 0 ;@ vicSpr7Col		;0xD02E
-	.byte 0 ;@ vicEmpty0		;0xD02F
 

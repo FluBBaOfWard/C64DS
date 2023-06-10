@@ -16,12 +16,9 @@ DEBUGSCREEN		= NTR_VRAM+0x3800
 
 ;@----------------------------------------------------------------------------
 
-#define scanline		294*4
-#define lastscanline	297*4
-//#define irqPending		300*4
 
 			;@ gfx.s
-#define vic_base_offset 0x4C0
+#define vic_base_offset m6502Size
 
 #define vicSpr0X		vic_base_offset
 #define vicSpr0Y		vic_base_offset +1
@@ -72,52 +69,9 @@ DEBUGSCREEN		= NTR_VRAM+0x3800
 #define vicSpr7Col		vic_base_offset +46
 #define vicEmpty0		vic_base_offset +47
 
-			;@ io.s
-#define cia_base_offset 0x4F0
-
-#define cia1_base_offset	cia_base_offset
-#define cia1porta		cia1_base_offset
-#define cia1portb		cia1_base_offset +1
-#define cia1ddra		cia1_base_offset +2
-#define cia1ddrb		cia1_base_offset +3
-#define cia1timeral		cia1_base_offset +4
-#define cia1timerah		cia1_base_offset +5
-#define cia1timerbl		cia1_base_offset +6
-#define cia1timerbh		cia1_base_offset +7
-#define cia1tod0		cia1_base_offset +8
-#define cia1tod1		cia1_base_offset +9
-#define cia1tod2		cia1_base_offset +10
-#define cia1tod3		cia1_base_offset +11
-#define cia1sioport		cia1_base_offset +12
-#define cia1irqctrl		cia1_base_offset +13
-#define cia1ctrla		cia1_base_offset +14
-#define cia1ctrlb		cia1_base_offset +15
-#define timer1a			cia1_base_offset +16
-#define timer1b			cia1_base_offset +20
-
-#define cia2_base_offset	cia_base_offset +24
-#define cia2porta		cia2_base_offset
-#define cia2portb		cia2_base_offset +1
-#define cia2ddra		cia2_base_offset +2
-#define cia2ddrb		cia2_base_offset +3
-#define cia2timeral		cia2_base_offset +4
-#define cia2timerah		cia2_base_offset +5
-#define cia2timerbl		cia2_base_offset +6
-#define cia2timerbh		cia2_base_offset +7
-#define cia2tod0		cia2_base_offset +8
-#define cia2tod1		cia2_base_offset +9
-#define cia2tod2		cia2_base_offset +10
-#define cia2tod3		cia2_base_offset +11
-#define cia2sioport		cia2_base_offset +12
-#define cia2irqctrl		cia2_base_offset +13
-#define cia2ctrla		cia2_base_offset +14
-#define cia2ctrlb		cia2_base_offset +15
-#define timer2a			cia2_base_offset +16
-#define timer2b			cia2_base_offset +20
-
-#define cia1irq			cia_base_offset +48
-#define cia2nmi			cia_base_offset +49
-
+#define scanline		vic_base_offset +48
+#define lastscanline	vic_base_offset +52
+#define vicSize			56
 
 ;@-----------------------------------------------------------cartflags
 #define SRAM		0x02	//;@ save SRAM
