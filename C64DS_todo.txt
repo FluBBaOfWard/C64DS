@@ -1,6 +1,9 @@
 C64 Todo
 
+	Fix better loading of prg files (wait for reset to finish, write run+return after loading).
 	Add cascade from Timer A to timer B.
+	Move VIC II (6569) code to it's own submodule.
+	Add address pins (from ULA) to VIC II, make CIA set pins on ULA.
 
 GFX:
 	Fix sprites so they are as good as before.
@@ -18,7 +21,6 @@ Sound:
 	See SID todo.
 
 Misc:
-	Time Bokan Series, slow.
 
 Games Not Working:
 
