@@ -33,7 +33,7 @@ gfxInit:	;@ (called from main.c) only need to call once
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
-	mov r0,#NTR_VRAM
+	mov r0,#BG_GFX
 	mov r1,#0
 	mov r2,#0x8000
 	bl memset_					;@ Clear
@@ -191,10 +191,7 @@ gfxReset:	;@ Called with CPU reset
 //	mov r0,#-1
 //	strb r0,oldchrbase
 
-//	ldr r1,=63					;@ PAL=63, NTSC=64/65.
-//	str r1,[r10,#cyclesperscanline]
-	ldr r1,=311					;@ PAL=311, NTSC=262. number of lines=last+1
-	str r1,[r10,#lastscanline]
+	bl gfxSetTVSystem
 
 	mov r1,#REG_BASE
 	mov r0,#0x0140			;@ X-delta
@@ -225,6 +222,26 @@ gfxReset:	;@ Called with CPU reset
 	bl paletteinit	;@ do palette mapping
 	ldmfd sp!,{pc}
 
+;@----------------------------------------------------------------------------
+gfxSetTVSystem:			;@ r0 = PAL/NTSC
+;@----------------------------------------------------------------------------
+	ldr r2,=wram_global_base
+	mov r0,#PALTIMING
+	strb r0,[r2,#vicTVSystem]
+	tst r0,#PALTIMING
+	ldrne r1,=63				;@ PAL=63
+	ldreq r1,=64				;@ NTSC=64/65
+//	str r1,[r2,#cyclesperscanline]
+	ldrne r1,=311				;@ PAL=311. number of lines=last+1
+	ldreq r1,=262				;@ NTSC=262. number of lines=last+1
+	str r1,[r2,#lastscanline]
+
+	movne r0,#50
+	moveq r0,#60
+	subne r2,r0,#1
+	ldr r1,=fpsNominal
+	strb r2,[r1]
+	b setLCDFPS
 ;@----------------------------------------------------------------------------
 BorderInit:
 ;@----------------------------------------------------------------------------
@@ -428,6 +445,30 @@ loop1:
 	strh r0,[r12,#REG_BG1VOFS]
 
 	blx scanKeys
+	mov r6,#REG_BASE
+	ldr r2,=wram_global_base
+	ldrb r0,[r2,#vicTVSystem]
+	tst r0,#PALTIMING
+	beq exitVbl
+	ldr r0,=pauseEmulation
+	ldr r0,[r0]
+	cmp r0,#0
+	bne exitVbl
+hz50Start:
+	mov r0,#5
+hz50Loop0:
+	ldrh r1,[r6,#REG_VCOUNT]
+	cmp r1,#212
+	beq hz50Loop0
+hz50Loop1:
+	ldrh r1,[r6,#REG_VCOUNT]
+	cmp r1,#212
+	bmi hz50Loop1
+	mov r1,#202
+	strh r1,[r6,#REG_VCOUNT]
+	subs r0,r0,#1
+	bne hz50Loop0
+exitVbl:
 	ldmfd sp!,{r4-r11,pc}
 
 ;@----------------------------------------------------------------------------

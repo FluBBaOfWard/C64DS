@@ -137,27 +137,7 @@ irqScanlineHook:
 	bl RenderLine
 
 	ldr r2,=cia1Base
-ScanlineTimerA1:
-	ldrb r1,[r2,#ciaCtrlTA]
-	tst r1,#0x01				;@ Timera1 active?
-	beq TimerA1Disabled
-//	tst r1,#0x20				;@ Count 02 clock or CNT signals?
-	ldr r12,[r2,#ciaTimerACount]
-	subs r12,r12,#63
-	bcs noTimerA1
-	ldrb r0,[r2,#ciaIrq]		;@ Set cia1 timera irq
-	orr r0,r0,#1
-	strb r0,[r2,#ciaIrq]
-
-	tst r1,#0x08				;@ Contigous/oneshoot?
-	ldreqb r0,[r2,#ciaTimerAL]
-	ldreqb r1,[r2,#ciaTimerAH]
-	orreq r0,r0,r1,lsl#8
-	addeq r12,r12,r0
-	movne r12,#-1
-noTimerA1:
-	str r12,[r2,#ciaTimerACount]
-TimerA1Disabled:
+	bl m6526RunXCycles
 
 VICRasterCheck:
 	ldrb r0,[r10,#vicRaster]

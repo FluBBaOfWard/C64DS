@@ -5,15 +5,6 @@
 
 globalptr	.req r10
 
-
-AGB_IRQVECT		= 0x03007FFC
-AGB_PALETTE		= 0x05000000
-NTR_VRAM		= 0x06000000
-AGB_OAM			= 0x07000000
-AGB_SRAM		= 0x0A000000
-DEBUGSCREEN		= NTR_VRAM+0x3800
-
-
 ;@----------------------------------------------------------------------------
 
 
@@ -71,7 +62,9 @@ DEBUGSCREEN		= NTR_VRAM+0x3800
 
 #define scanline		vic_base_offset +48
 #define lastscanline	vic_base_offset +52
-#define vicSize			56
+#define vicTVSystem		vic_base_offset +56
+#define vidEnd			vic_base_offset +60
+#define vicSize			60
 
 ;@-----------------------------------------------------------cartflags
 #define SRAM		0x02	//;@ save SRAM
@@ -79,8 +72,6 @@ DEBUGSCREEN		= NTR_VRAM+0x3800
 #define PALTIMING	1	//;@ PAL timing =)
 #define EXPORTFLAG	2	//;@ JAP/Rest of world
 #define COUNTRY		4	//;@ 0=US 1=JAP
-;@ ?				16
-#define FOLLOWMEM   32	//;@ 0=follow sprite, 1=follow mem
 
 				;@ Bits 8-15=scale type
 
@@ -88,6 +79,4 @@ DEBUGSCREEN		= NTR_VRAM+0x3800
 #define UNSCALED_AUTO	1
 #define SCALED			2
 #define SCALED_SPRITES	3
-
-				;@ Bits 16-31=sprite follow val
 
