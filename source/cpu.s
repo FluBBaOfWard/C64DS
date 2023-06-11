@@ -9,6 +9,10 @@
 	.global stepFrame
 	.global cpuInit
 	.global cpuReset
+	.global setVicIrq
+	.global setCia1Irq
+	.global setCia2Nmi
+	.global setKeybNmi
 
 	.global frameTotal
 	.global waitMaskIn
@@ -136,6 +140,8 @@ irqScanlineHook:
 	stmfd sp!,{lr}
 	bl RenderLine
 
+	ldr r2,=cia2Base
+	bl m6526RunXCycles
 	ldr r2,=cia1Base
 	bl m6526RunXCycles
 
@@ -152,19 +158,13 @@ VICRasterCheck:
 	strb r0,[r10,#vicIrqFlag]
 noRasterIrq:
 
-	ldrb r12,[r2,#ciaIrqCtrl]
-	ldrb r1,[r2,#ciaIrq]
-	ands r0,r12,r1
-	movne r0,#0x01			;@ Normal interrupt (CIA1)
 	ldrb r12,[r10,#vicIrqEnable]
 	ldrb r1,[r10,#vicIrqFlag]
-	ands r12,r12,r1
+	ands r0,r12,r1
 	orrne r0,r0,#0x01		;@ Normal interrupt (VIC)
 
-	bl m6502SetIRQPin
-
 	ldmfd sp!,{lr}
-	bx lr
+	b setVicIrq
 
 ;@----------------------------------------------------------------------------
 setVicIrq:			;@ r0 = irq status, m6502ptr = r10 = pointer to struct
@@ -203,12 +203,12 @@ setKeybNmi:			;@ r0 = nmi status, m6502ptr = r10 = pointer to struct
 	strb r0,nmiPinStatus
 	b m6502SetNMIPin
 ;@----------------------------------------------------------------------------
-cpuInit:					;@ Called by machineInit
+cpuInit:			;@ Called by machineInit
 ;@----------------------------------------------------------------------------
 	ldr r0,=m6502_0
 	b m6502Init
 ;@----------------------------------------------------------------------------
-cpuReset:		;@ Called by loadCart/resetGame
+cpuReset:			;@ Called by loadCart/resetGame
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 

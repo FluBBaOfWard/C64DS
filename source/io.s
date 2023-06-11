@@ -38,11 +38,15 @@ IO_reset:
 	str r1,[r0,#ciaPortAReadFunc]
 	ldr r1,=joy1KeybRead
 	str r1,[r0,#ciaPortBReadFunc]
+	ldr r1,=setCia1Irq
+	str r1,[r0,#ciaIrqFunc]
 
 	ldr r0,=cia2Base
 	bl m6526Init
 	ldr r1,=SetC64GfxBases
 	str r1,[r0,#ciaPortAWriteFunc]
+	ldr r1,=setCia2Nmi
+	str r1,[r0,#ciaIrqFunc]
 
 	ldmfd sp!,{lr}
 	bx lr

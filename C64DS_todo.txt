@@ -1,6 +1,6 @@
 C64 Todo
 
-	Move Timer calculation to ARM6526 class.
+	Add cascade from Timer A to timer B.
 
 GFX:
 	Fix sprites so they are as good as before.
