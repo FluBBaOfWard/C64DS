@@ -11,10 +11,11 @@
 #include "io.h"
 #include "cpu.h"
 #include "ARM6502/Version.h"
-#include "ARM6581/Version.h"
 #include "ARM6526/Version.h"
+#include "ARM6569/Version.h"
+#include "ARM6581/Version.h"
 
-#define EMUVERSION "V0.2.0 2023-06-11"
+#define EMUVERSION "V0.2.0 2023-06-12"
 
 #define ENABLE_LIVE_UI		(1<<12)
 #define ALLOW_SPEED_HACKS	(1<<17)
@@ -141,10 +142,11 @@ void uiAbout() {
 
 	drawMenuText(gameInfoString, 9, 0);
 
-	drawMenuText("C64DS        " EMUVERSION, 19, 0);
-	drawMenuText("ARM6502      " ARM6502VERSION, 20, 0);
-	drawMenuText("ARM6581      " ARM6581VERSION, 21, 0);
-	drawMenuText("ARM6526      " ARM6526VERSION, 22, 0);
+	drawMenuText("C64DS        " EMUVERSION, 18, 0);
+	drawMenuText("ARM6502      " ARM6502VERSION, 19, 0);
+	drawMenuText("ARM6526      " ARM6526VERSION, 20, 0);
+	drawMenuText("ARM6569      " ARM6569VERSION, 21, 0);
+	drawMenuText("ARM6581      " ARM6581VERSION, 22, 0);
 }
 
 void uiController() {

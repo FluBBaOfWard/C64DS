@@ -181,7 +181,7 @@ joy1KeybRead:				;@ 0xDC01 Joy1/Keyboard, r2 = cia
 	mov r0,#0xFF
 portBLoop:
 	movs r2,r2,lsr#1
-	ldrcsb r1,[addy]
+	ldrbcs r1,[addy]
 	andcs r0,r0,r1
 	add addy,addy,#1
 	bne portBLoop
@@ -201,7 +201,7 @@ refreshEMUjoypads:			;@ Call every frame
 	and r0,r4,#0xF0
 		ldr r2,joyCfg
 		andcs r4,r4,r2
-		movcss addy,r4,lsr#10	;@ L?
+		movscs addy,r4,lsr#10	;@ L?
 		andcs r4,r4,r2,lsr#16
 	adr addy,rlud2udlr
 	ldrb r0,[addy,r0,lsr#4]		;@ downupleftright

@@ -2,8 +2,8 @@
 
 #include "Shared/nds_asm.h"
 #include "ARM6526/ARM6526.i"
+#include "ARM6569/ARM6569.i"
 #include "ARM6502/M6502.i"
-#include "equates.h"
 
 	.global run
 	.global stepFrame
@@ -233,7 +233,7 @@ cpuReset:			;@ Called by loadCart/resetGame
 wram_global_base:
 m6502_0:
 	.space m6502Size
-	.space vicSize
+	.space m6569Size
 ;@----------------------------------------------------------------------------
 	.end
 #endif // #ifdef __arm__

@@ -1,4 +1,3 @@
-#include "equates.h"
 #include "ARM6502/M6502.i"
 
 //	.extern Chargen
