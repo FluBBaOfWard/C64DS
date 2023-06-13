@@ -175,6 +175,8 @@ static void setupGraphics() {
 
 	// Set up the main display
 	videoSetMode(MODE_5_2D
+				 | DISPLAY_SPR_1D
+				 | DISPLAY_SPR_1D_SIZE_128
 //				 | DISPLAY_BG1_ACTIVE
 				 | DISPLAY_BG2_ACTIVE
 				 | DISPLAY_BG3_ACTIVE

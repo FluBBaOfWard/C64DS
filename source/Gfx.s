@@ -58,13 +58,13 @@ gfxInit:	;@ (called from main.c) only need to call once
 
 	ldr r1,=tile_base
 	ldr r1,[r1]
-	add r1,r1,#0x1000		;@ Offset the background so we have space for a tilemaped mode.
+	add r1,r1,#0x1000			;@ Offset the background so we have space for a tilemaped mode.
 	ldr r0,=bg2_ptr0
 	str r1,[r0],#4
 	add r1,r1,#0x20000
 	str r1,[r0]
 
-	mov r2,#0xffffff00		;@ Build bg tile decode tbl
+	mov r2,#0xffffff00			;@ Build bg tile decode tbl
 	ldr r3,=chrDecode
 ppi0:
 	mov r0,#0
@@ -88,7 +88,7 @@ ppi0:
 	adds r2,r2,#1
 	bne ppi0
 
-	mov r2,#0xffffff00		;@ Build bg tile decode tbl
+	mov r2,#0xffffff00			;@ Build bg tile decode tbl
 	ldr r3,=chrDecode2
 ppi2:
 	and r0,r2,#0x00000003
@@ -104,7 +104,7 @@ ppi2:
 	adds r2,r2,#1
 	bne ppi2
 
-	mov r2,#0xffffff00		;@ Build bg tile decode tbl
+	mov r2,#0xffffff00			;@ Build bg tile decode tbl
 	ldr r3,=chrDecode3
 ppi3:
 	mov r0,#0
@@ -129,7 +129,7 @@ ppi3:
 	adds r2,r2,#1
 	bne ppi3
 
-	mov r2,#0xffffff00		;@ Build bg tile decode tbl
+	mov r2,#0xffffff00			;@ Build bg tile decode tbl
 	ldr r3,=chrDecode4
 ppi4:
 	mov r0,#0
@@ -150,7 +150,7 @@ ppi4:
 	adds r2,r2,#1
 	bne ppi4
 
-//	mov r2,#0xffffff00		;@ Build bg tile decode tbl
+//	mov r2,#0xffffff00			;@ Build bg tile decode tbl
 //	ldr r3,=chrDecodeNew
 //ppi5:
 //	mov r0,#0
@@ -183,8 +183,8 @@ gfxReset:	;@ Called with CPU reset
 //	strb r1,ystart
 
 //	ldr r0,=gfxstate
-//	mov r2,#5				;@ 5*4
-//	bl memset_				;@ Clear GFX regs
+//	mov r2,#5					;@ 5*4
+//	bl memset_					;@ Clear GFX regs
 
 //	mov r0,#1
 //	strb r0,sprmemreload
@@ -195,24 +195,24 @@ gfxReset:	;@ Called with CPU reset
 	bl gfxSetTVSystem
 
 	mov r1,#REG_BASE
-	mov r0,#0x0140			;@ X-delta
+	mov r0,#0x0140				;@ X-delta
 	strh r0,[r1,#REG_BG2PA]
-//	mov r0,#0x0001			;@ X-delta
-	mov r0,#0x0028			;@ X-delta
+//	mov r0,#0x0001				;@ X-delta
+	mov r0,#0x0028				;@ X-delta
 	strh r0,[r1,#REG_BG3PA]
-	ldr r0,=0x010B			;@ Y-delta
+	ldr r0,=0x010B				;@ Y-delta
 	strh r0,[r1,#REG_BG2PD]
 	strh r0,[r1,#REG_BG3PD]
 
 	mov r3,#0x0410
-	strh r3,[r1,#REG_BLDCNT]		;@ OBJ blend to BG0
-	mov r3,#0x1000					;@ BG0=16, OBJ=0
-	strh r3,[r1,#REG_BLDALPHA]		;@ Alpha values
+	strh r3,[r1,#REG_BLDCNT]	;@ OBJ blend to BG0
+	mov r3,#0x1000				;@ BG0=16, OBJ=0
+	strh r3,[r1,#REG_BLDALPHA]	;@ Alpha values
 
 //	mov r0,#AGB_OAM
 //	mov r1,#0x2c0
 //	mov r2,#0x100
-//	bl memset_		;@ No stray sprites please
+//	bl memset_					;@ No stray sprites please
 //	ldr r0,=obj_buffer0
 //	mov r2,#0x180
 //	bl memset_
@@ -220,7 +220,7 @@ gfxReset:	;@ Called with CPU reset
 	bl BorderInit
 //	bl InitBGTiles
 	bl SpriteScaleInit
-	bl paletteinit	;@ do palette mapping
+	bl paletteinit				;@ do palette mapping
 	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
@@ -249,9 +249,9 @@ BorderInit:
 	stmfd sp!,{r4-r5,lr}
 	ldr r5,=tile_base
 	ldr r5,[r5]
-	mov r0,#64			;@ First free tile after map
-	mov r1,#66			;@ First border tile
-	orr r2,r1,#0x0400	;@ X flip
+	mov r0,#64					;@ First free tile after map
+	mov r1,#66					;@ First border tile
+	orr r2,r1,#0x0400			;@ X flip
 	mov r3,#25
 border_loop:
 	strh r1,[r5],#0x2
@@ -276,10 +276,10 @@ paletteinit:	;@ r0-r3 modified.
 
 	adr r7,C64Palette
 	ldr r6,=c64_palette_mod
-//	ldrb r1,gammavalue	;@ Gamma value = 0 -> 4
-	mov r1,#1			;@ Gamma value = 0 -> 4
-	mov r4,#15			;@
-nomap:					;@ Map rrrrrrrrggggggggbbbbbbbb  ->  0bbbbbgggggrrrrr
+//	ldrb r1,gammavalue			;@ Gamma value = 0 -> 4
+	mov r1,#1					;@ Gamma value = 0 -> 4
+	mov r4,#15					;@
+nomap:							;@ Map rrrrrrrrggggggggbbbbbbbb  ->  0bbbbbgggggrrrrr
 	ldrb r0,[r7],#1
 	bl gammaconvert
 	mov r5,r0
@@ -329,7 +329,7 @@ scaleparms:
 SpriteScaleInit:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r6}
-	adr r5,scaleparms		;@ Set sprite scaling params
+	adr r5,scaleparms			;@ Set sprite scaling params
 	ldmia r5,{r0-r5}
 
 	mov r6,#2
@@ -342,11 +342,11 @@ scaleLoop:
 		strh r0,[r5],#8
 		strh r0,[r5],#8
 		strh r2,[r5],#8
-			strh r1,[r5],#8			;@ Verticaly expanded sprites
+			strh r1,[r5],#8		;@ Verticaly expanded sprites
 			strh r0,[r5],#8
 			strh r0,[r5],#8
 			strh r4,[r5],#8
-				strh r3,[r5],#8		;@ Double sprites
+				strh r3,[r5],#8	;@ Double sprites
 				strh r0,[r5],#8
 				strh r0,[r5],#8
 				strh r4,[r5],#136
@@ -438,7 +438,7 @@ loop1:
 	str r3,[r12,#REG_DMA2CNT]	;@ DMA2 Go!
 
 ;@----------------- GUI screen -------------------
-	add r12,r12,#0x1000							;@ SUB gfx
+	add r12,r12,#0x1000			;@ SUB gfx
 //	ldr r0,=film_pos
 	ldr r0,=0
 	strh r0,[r12,#REG_BG0VOFS]
@@ -559,12 +559,12 @@ RenderModeTbl:
 ;@----------------------------------------------------------------------------
 newFrame:	;@ Called before line 0	(r0-r9 safe to use)
 ;@----------------------------------------------------------------------------
-	mov r0,#-1				;@ Rambo checks for IRQ on line 0
-	str r0,[r10,#scanline]	;@ Reset scanline count
+	mov r0,#-1					;@ Rambo checks for IRQ on line 0
+	str r0,[r10,#scanline]		;@ Reset scanline count
 
 	ldr r0,=frameTotal
 	ldr r0,[r0]
-	and r0,r0,#1
+	and r0,r0,#1				;@ Why should this flicker?
 	mov r0,r0,lsl#7
 	orr r0,r0,r0,lsl#8
 	orr r0,r0,r0,lsl#16
@@ -575,7 +575,7 @@ newFrame:	;@ Called before line 0	(r0-r9 safe to use)
 
 	ldr r1,=obj_buf_ptr0
 	ldr r1,[r1]
-	mov r0,#0x2c0		;@ Double, y=191
+	mov r0,#0x2c0				;@ Double, y=191
 	mov r2,#128
 sprClrLoop:
 	str r0,[r1],#8
@@ -605,20 +605,20 @@ endFrame:	;@ Called just before screen end (~line 240)	(r0-r2 safe to use)
 	bl VIC_ctrl2_W
 
 //	mrs r4,cpsr
-//	orr r1,r4,#0x80			;@ --> Disable IRQ.
+//	orr r1,r4,#0x80				;@ --> Disable IRQ.
 //	msr cpsr_cf,r1
 
-	ldr r2,=obj_buf_ptr0	;@ Switch obj buffers
+	ldr r2,=obj_buf_ptr0		;@ Switch obj buffers
 	ldmia r2,{r0,r1}
 	str r0,[r2,#4]
 	str r1,[r2]
 
-	ldr r2,=bg2_ptr0		;@ Switch bg2 buffers
+	ldr r2,=bg2_ptr0			;@ Switch bg2 buffers
 	ldmia r2,{r0,r1}
 	str r0,[r2,#4]
 	str r1,[r2]
 
-	ldr r2,=scroll_ptr0		;@ Switch scroll buffers
+	ldr r2,=scroll_ptr0			;@ Switch scroll buffers
 	ldmia r2,{r0,r1}
 	str r0,[r2,#4]
 	str r1,[r2]
@@ -627,7 +627,7 @@ endFrame:	;@ Called just before screen end (~line 240)	(r0-r2 safe to use)
 //	str r0,oambufferready
 
 
-//	msr cpsr_cf,r4			;@ --> restore mode,Enable IRQ.
+//	msr cpsr_cf,r4				;@ --> restore mode,Enable IRQ.
 
 	ldmfd sp!,{r3-r9,lr}
 	bx lr
@@ -642,7 +642,7 @@ PaletteTxAll:		;@ Called from ui.c
 	ldrb r0,[r10,#vicBrdCol]
 	and r0,r7,r0,lsl#1
 	ldrh r0,[r2,r0]
-	strh r0,[r3,#0x1E]		;@ Set sideborder color (plane1)
+	strh r0,[r3,#0x1E]			;@ Set sideborder color (plane1)
 	strh r0,[r3],#2
 
 	ldrb r4,[r10,#vicBgr1Col]
@@ -653,7 +653,7 @@ PaletteTxAll:		;@ Called from ui.c
 	ldrh r5,[r2,r5]
 
 	mov r1,#0
-c64loop1:					;@ Normal BG tile colors
+c64loop1:						;@ Normal BG tile colors
 	ldrh r0,[r2,r1]
 	strh r4,[r3],#0x02
 	strh r5,[r3],#0x02
@@ -674,7 +674,7 @@ c64loop1:					;@ Normal BG tile colors
 	add r6,r6,r10
 
 	mov r1,#0
-c64loop3:					;@ Sprite colors.
+c64loop3:						;@ Sprite colors.
 	ldrb r0,[r6],#1
 	and r0,r7,r0,lsl#1
 	ldrh r0,[r2,r0]
@@ -689,7 +689,7 @@ c64loop3:					;@ Sprite colors.
 	bx lr
 
 ;@----------------------------------------------------------------------------
-RenderLine:			;@ r0=?, r1=scanline.
+RenderLine:					;@ r0=?, r1=scanline.
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r1-r11,lr}
 	bl RenderSprites
@@ -759,7 +759,7 @@ RenderTiles:
 //	mov r11,r11
 	ldr r2,=c64_map_base
 	ldr r5,[r2]
-	sub r6,m6502zpage,#0x400		;@ Bg colormap
+	sub r6,m6502zpage,#0x400	;@ Bg colormap
 	add r5,r5,r0
 	add r6,r6,r0
 
@@ -843,12 +843,12 @@ bgrdLoop:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-RenderTilesECM:					;@ ExtendedColorMode
+RenderTilesECM:				;@ ExtendedColorMode
 ;@----------------------------------------------------------------------------
 
 	ldr r2,=c64_map_base
 	ldr r5,[r2]
-	sub r6,m6502zpage,#0x400		;@ Bg colormap
+	sub r6,m6502zpage,#0x400	;@ Bg colormap
 	add r5,r5,r0
 	add r6,r6,r0
 
@@ -934,7 +934,7 @@ bgrdLoop1:
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
-RenderTilesMCM:					;@ MultiColorMode
+RenderTilesMCM:				;@ MultiColorMode
 ;@----------------------------------------------------------------------------
 
 	ldr r2,=c64_map_base
@@ -1086,7 +1086,7 @@ bgrdLoop4:
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
-RenderBmpMCM:					;@ MultiColorMode
+RenderBmpMCM:				;@ MultiColorMode
 ;@----------------------------------------------------------------------------
 
 	ldr r2,=c64_map_base
@@ -1218,18 +1218,18 @@ sprLoop:
 	tst r9,r4,lsl r8
 	beq next_spr
 
-	mov r2,r0,lsr#8			;@ Y-pos
+	mov r2,r0,lsr#8				;@ Y-pos
 	ldr r5,=0xF5C2
 	mul r2,r5,r2
 	mov r2,r2,lsr#16
 
-	and r0,r0,#0xFF			;@ X-pos
+	and r0,r0,#0xFF				;@ X-pos
 	ldrb r5,[r10,#vicSprXPos]
 	tst r5,r4,lsl r8
 	orrne r0,r0,#0x100
 
-	mov r6,#0x00000100		;@ Use scaling
-	orr r6,r6,#0x80000000	;@ 32x32 size
+	mov r6,#0x00000100			;@ Use scaling
+	orr r6,r6,#0x80000000		;@ 32x32 size
 
 	ldrb r5,[r10,#vicSprPrio]
 	tst r5,r4,lsl r8
@@ -1241,46 +1241,45 @@ sprLoop:
 	ldrb r5,[r10,#vicSprExpY]
 	tst r5,r4,lsl r8
 	orrne r6,r6,#0x04000000
-	tst r6,#0x06000000		;@ Expand X or Y?
+	tst r6,#0x06000000			;@ Expand X or Y?
 	beq noExpand
-	orrne r6,r6,#0x00000200	;@ Use double size
+	orrne r6,r6,#0x00000200		;@ Use double size
 	tst r6,#0x02000000
 	subeq r0,r0,#20
 	tst r6,#0x04000000
 	subeq r2,r2,#16
 noExpand:
-	sub r2,r2,#48			;@ (50) fix up Y-pos
+	sub r2,r2,#48				;@ (50) fix up Y-pos
 	and r2,r2,#0xff
 	orr r2,r2,r6
 
 	ldr r5,=0xCCCC
 	mul r0,r5,r0
-//	sub r0,r0,#0x18			;@ Fix up X-pos
-	sub r0,r0,#0x150000		;@ Was 0x140000 (now +3)
-	tst r6,#0x02000000		;@ X expand?
-	subne r0,r0,#0x030000	;@ Another +3 for X expanded.
+//	sub r0,r0,#0x18				;@ Fix up X-pos
+	sub r0,r0,#0x150000			;@ Was 0x140000 (now +3)
+	tst r6,#0x02000000			;@ X expand?
+	subne r0,r0,#0x030000		;@ Another +3 for X expanded.
 	ldr r6,=0x1ff
 	and r0,r6,r0,lsr#16
 
 	orr r6,r2,r0,lsl#16
 
-	bl VRAM_spr				;@ Jump to spr copy
+	bl VRAM_spr					;@ Jump to spr copy
 ret01:
 	ldr r4,=obj_counter
 	ldrb r2,[r4,r8]
 	add r5,r2,#1
 	strb r5,[r4,r8]
 	add r2,r2,r8,lsl#4
-	mov r0,r2,lsl#2			;@ Tile nr.
+	mov r0,r2,lsl#2				;@ Tile nr.
 	and r2,r2,#0x7F
 	add r5,r7,r2,lsl#3
-	orr r0,r0,r8,lsl#12		;@ Color
-	orr r0,r0,#PRIORITY		;@ Priority
-	str r6,[r5],#4			;@ Store OBJ Atr 0,1. Xpos, ypos, xflip, scale/rot, size, shape.
-	strh r0,[r5]			;@ Store OBJ Atr 2. Pattern, palette.
+	orr r0,r0,r8,lsl#12			;@ Color
+	orr r0,r0,#PRIORITY			;@ Priority
+	str r6,[r5],#4				;@ Store OBJ Atr 0,1. Xpos, ypos, xflip, scale/rot, size, shape.
+	strh r0,[r5]				;@ Store OBJ Atr 2. Pattern, palette.
 
 next_spr:
-
 	add r8,r8,#1
 	cmp r8,#8
 	bne sprLoop
@@ -1302,12 +1301,12 @@ VRAM_spr:
 	add r5,r5,r0,lsl#9
 
 	ldr r0,=c64_map_base
-	ldr r12,[r0]					;@ Spr tile bitmap
+	ldr r12,[r0]				;@ Spr tile bitmap
 	add r12,r12,#0x3F8
-	ldrb r0,[r12,r8]				;@ Tile nr.
+	ldrb r0,[r12,r8]			;@ Tile nr.
 
 	ldr r2,=cia2Base
-	ldrb r2,[r2,#ciaDataPortA]		;@ VIC bank, 0x4000*4
+	ldrb r2,[r2,#ciaDataPortA]	;@ VIC bank, 0x4000*4
 	eor r2,r2,#0x03
 	and r2,r2,#0x03
 	add r12,m6502zpage,r2,lsl#14
@@ -1375,7 +1374,7 @@ sprLoop3:
 
 	.section .bss
 	.align 2
-//chrDecodeNew				;@ 16*16*16*16*4
+//chrDecodeNew					;@ 16*16*16*16*4
 //	.space 0x40000
 chrDecode:
 	.space 256*4

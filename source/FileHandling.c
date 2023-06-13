@@ -18,6 +18,7 @@
 static const char *const folderName = "c64ds";
 static const char *const settingName = "settings.cfg";
 
+extern u8 c64Program[];
 int sramSize = 0;
 ConfigData cfg;
 
@@ -195,6 +196,20 @@ int loadC64ROM(const char *fileName) {
 	return size;
 }
 
+int loadC64PrgFake(const u8 *program) {
+	int size = 48*1024;
+	int fileEnd;
+	u16 fileStart;
+
+	fileStart = *(u16 *)program;
+	memcpy(&emu_ram_base[fileStart], &program[2], size);
+	fileEnd = fileStart + size;
+	emu_ram_base[0x2d] = emu_ram_base[0x2f] = emu_ram_base[0x31] = emu_ram_base[0xAE] = (unsigned char)fileEnd;
+	emu_ram_base[0x2e] = emu_ram_base[0x30] = emu_ram_base[0x32] = emu_ram_base[0xAF] = (unsigned char)(fileEnd>>8);
+
+	return size;
+}
+
 //---------------------------------------------------------------------------------
 bool loadGame(const char *gameName) {
 	if ( gameName ) {
@@ -222,6 +237,7 @@ bool loadGame(const char *gameName) {
 void selectGame() {
 	pauseEmulation = true;
 	ui10();
+//	loadC64PrgFake( c64Program );
 	const char *gameName = browseForFileType(FILEEXTENSIONS".zip");
 	if ( loadGame(gameName) ) {
 		backOutOfMenu();

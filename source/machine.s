@@ -1,4 +1,3 @@
-#include "equates.h"
 #include "memory.h"
 #include "ARM6502/M6502mac.h"
 
@@ -9,6 +8,7 @@
 	.global Chargen
 	.global Basic
 	.global Kernal
+	.global c64Program
 
 
 	.section .text
@@ -19,7 +19,7 @@ machineReset:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
-	ldr globalptr,=wram_global_base
+	ldr r10,=wram_global_base
 	ldr r0,=emu_ram_base
 	ldr m6502zpage,[r0]
 	add m6502zpage,m6502zpage,#0x1FC
@@ -232,6 +232,9 @@ data_out:
 	.pool
 //	.section .bss
 	.align 2
+c64Program:
+//	.incbin "GianaSisters.prg"
+//	.align 2
 Chargen:
 	.incbin "chargen.rom"
 //	.space 0x1000
