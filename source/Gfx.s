@@ -32,7 +32,7 @@
 gfxInit:	;@ (called from main.c) only need to call once
 	.type gfxInit STT_FUNC
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{lr}
+	stmfd sp!,{r10,lr}
 
 	mov r0,#BG_GFX
 	mov r1,#0
@@ -171,7 +171,11 @@ ppi4:
 //	adds r2,r2,#1
 //	bne ppi5
 
-	ldmfd sp!,{lr}
+	ldr vic2ptr,=wram_global_base
+	bl m6569Init
+	ldr r1,=setVicIrq
+	str r1,[vic2ptr,#vicIrqFunc]
+	ldmfd sp!,{r10,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
 gfxReset:	;@ Called with CPU reset
@@ -192,6 +196,7 @@ gfxReset:	;@ Called with CPU reset
 //	mov r0,#-1
 //	strb r0,oldchrbase
 
+	bl m6569Reset
 	bl gfxSetTVSystem
 
 	mov r1,#REG_BASE
@@ -601,7 +606,7 @@ endFrame:	;@ Called just before screen end (~line 240)	(r0-r2 safe to use)
 ;@--------------------------
 	bl PaletteTxAll
 ;@--------------------------
-	ldrb r0,[r10,#vicCtrl2]
+	ldrb r0,[vic2ptr,#vicCtrl2]
 	bl VIC_ctrl2_W
 
 //	mrs r4,cpsr
@@ -639,16 +644,16 @@ PaletteTxAll:		;@ Called from ui.c
 	ldr r2,=c64_palette_mod
 	ldr r3,=pal_buffer
 	mov r7,#0x1E
-	ldrb r0,[r10,#vicBrdCol]
+	ldrb r0,[vic2ptr,#vicBrdCol]
 	and r0,r7,r0,lsl#1
 	ldrh r0,[r2,r0]
 	strh r0,[r3,#0x1E]			;@ Set sideborder color (plane1)
 	strh r0,[r3],#2
 
-	ldrb r4,[r10,#vicBgr1Col]
+	ldrb r4,[vic2ptr,#vicBgr1Col]
 	and r4,r7,r4,lsl#1
 	ldrh r4,[r2,r4]
-	ldrb r5,[r10,#vicBgr2Col]
+	ldrb r5,[vic2ptr,#vicBgr2Col]
 	and r5,r7,r5,lsl#1
 	ldrh r5,[r2,r5]
 
@@ -664,10 +669,10 @@ c64loop1:						;@ Normal BG tile colors
 
 	ldr r3,=pal_buffer+0x202
 
-	ldrb r4,[r10,#vicSprM0Col]
+	ldrb r4,[vic2ptr,#vicSprM0Col]
 	and r4,r7,r4,lsl#1
 	ldrh r4,[r2,r4]
-	ldrb r5,[r10,#vicSprM1Col]
+	ldrb r5,[vic2ptr,#vicSprM1Col]
 	and r5,r7,r5,lsl#1
 	ldrh r5,[r2,r5]
 	ldr r6,=vicSpr0Col
@@ -712,7 +717,7 @@ RenderLine:					;@ r0=?, r1=scanline.
 	cmp r2,#8
 	bmi noNewTileRow
 
-	ldrb r0,[r10,#vicCtrl1]
+	ldrb r0,[vic2ptr,#vicCtrl1]
 	sub r4,r1,r0
 	ands r4,r4,#7				;@ Do we have a new tile row?
 //	bne noNewTileRow
@@ -741,7 +746,7 @@ RenderModePtr:
 
 exitLineRender:
 //	cmp r1,#-1
-//	ldrbeq r0,[r10,#vicCtrl1]
+//	ldrbeq r0,[vic2ptr,#vicCtrl1]
 //	andeq r0,r0,#7
 //	rsbeq r0,r0,#3
 //	streq r0,main_y_offset
@@ -1168,10 +1173,10 @@ RenderBlankLine:
 	orr r0,r0,r0,lsl#8
 	orr r0,r0,r0,lsl#16
 	mov r1,#90					;@ Screen plus border
-blankloop:
+blankLoop:
 	str r0,[r9],#4
 	subs r1,r1,#1
-	bne blankloop
+	bne blankLoop
 
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
@@ -1199,7 +1204,7 @@ RenderSprites:			;@ r0=?, r1=scanline.
 
 //	sub r1,r1,#1				;@ "tp8 results" breaks with this, fixes StarPaws.
 	and r1,r1,#0xFF
-	add r3,r10,#m6569Registers
+	add r3,vic2ptr,#m6569Registers
 	ldr r7,=obj_buf_ptr0
 	ldr r7,[r7]
 //	ldr r0,=obj_counter
@@ -1207,16 +1212,16 @@ RenderSprites:			;@ r0=?, r1=scanline.
 //	and r0,r0,#0x7f
 //	add r7,r7,r0,lsl#3
 
-	ldrb r9,[r10,#vicSprEnable]
+	ldrb r9,[vic2ptr,#vicSprEnable]
 
 	mov r8,#0
 sprLoop:
 	ldrh r0,[r3],#2
 	cmp r1,r0,lsr#8
-	bne next_spr
+	bne nextSpr
 	mov r4,#1
 	tst r9,r4,lsl r8
-	beq next_spr
+	beq nextSpr
 
 	mov r2,r0,lsr#8				;@ Y-pos
 	ldr r5,=0xF5C2
@@ -1224,21 +1229,21 @@ sprLoop:
 	mov r2,r2,lsr#16
 
 	and r0,r0,#0xFF				;@ X-pos
-	ldrb r5,[r10,#vicSprXPos]
+	ldrb r5,[vic2ptr,#vicSprXPos]
 	tst r5,r4,lsl r8
 	orrne r0,r0,#0x100
 
 	mov r6,#0x00000100			;@ Use scaling
 	orr r6,r6,#0x80000000		;@ 32x32 size
 
-	ldrb r5,[r10,#vicSprPrio]
+	ldrb r5,[vic2ptr,#vicSprPrio]
 	tst r5,r4,lsl r8
 	orrne r6,r6,#0x00000400
 
-	ldrb r5,[r10,#vicSprExpX]
+	ldrb r5,[vic2ptr,#vicSprExpX]
 	tst r5,r4,lsl r8
 	orrne r6,r6,#0x02000000
-	ldrb r5,[r10,#vicSprExpY]
+	ldrb r5,[vic2ptr,#vicSprExpY]
 	tst r5,r4,lsl r8
 	orrne r6,r6,#0x04000000
 	tst r6,#0x06000000			;@ Expand X or Y?
@@ -1279,12 +1284,12 @@ ret01:
 	str r6,[r5],#4				;@ Store OBJ Atr 0,1. Xpos, ypos, xflip, scale/rot, size, shape.
 	strh r0,[r5]				;@ Store OBJ Atr 2. Pattern, palette.
 
-next_spr:
+nextSpr:
 	add r8,r8,#1
 	cmp r8,#8
 	bne sprLoop
 
-exit_sprite_render:
+exitSpriteRenderer:
 	ldmfd sp!,{r1,lr}
 	bx lr
 

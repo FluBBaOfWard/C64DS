@@ -58,8 +58,13 @@ c64FrameLoop:
 ;@----------------------------------------------------------------------------
 	mov r0,#63
 	bl m6502RunXCycles
-	ldr r1,[r10,#scanline]
-	bl irqScanlineHook
+
+	ldr r2,=cia2Base
+	bl m6526RunXCycles
+	ldr r2,=cia1Base
+	bl m6526RunXCycles
+
+	bl m6569DoScanline
 
 	ldr r1,[r10,#scanline]
 	add r1,r1,#1
@@ -113,8 +118,13 @@ c64StepLoop:
 ;@----------------------------------------------------------------------------
 	mov r0,#63
 	bl m6502RunXCycles
-	ldr r1,[r10,#scanline]
-	bl irqScanlineHook
+
+	ldr r2,=cia2Base
+	bl m6526RunXCycles
+	ldr r2,=cia1Base
+	bl m6526RunXCycles
+
+	bl m6569DoScanline
 
 	ldr r1,[r10,#scanline]
 	add r1,r1,#1
@@ -134,37 +144,6 @@ c64StepLoop:
 
 	ldmfd sp!,{r4-r11,lr}
 	bx lr
-;@----------------------------------------------------------
-irqScanlineHook:
-;@----------------------------------------------------------
-	stmfd sp!,{lr}
-	bl RenderLine
-
-	ldr r2,=cia2Base
-	bl m6526RunXCycles
-	ldr r2,=cia1Base
-	bl m6526RunXCycles
-
-VICRasterCheck:
-	ldrb r0,[r10,#vicRaster]
-	ldrb r1,[r10,#vicCtrl1]
-	tst r1,#0x80
-	orrne r0,r0,#0x100
-	ldr r1,[r10,#scanline]
-	cmp r0,r1
-	bne noRasterIrq
-	ldrb r0,[r10,#vicIrqFlag]
-	orr r0,r0,#1
-	strb r0,[r10,#vicIrqFlag]
-noRasterIrq:
-
-	ldrb r12,[r10,#vicIrqEnable]
-	ldrb r1,[r10,#vicIrqFlag]
-	ands r0,r12,r1
-	orrne r0,r0,#0x01		;@ Normal interrupt (VIC)
-
-	ldmfd sp!,{lr}
-	b setVicIrq
 
 ;@----------------------------------------------------------------------------
 setVicIrq:			;@ r0 = irq status, m6502ptr = r10 = pointer to struct
