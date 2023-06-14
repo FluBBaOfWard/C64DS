@@ -9,6 +9,7 @@ extern u8 gMachine;
 
 extern u8 *c64Ram;
 
+void machineReset(void);
 #ifdef __cplusplus
 } // extern "C"
 #endif

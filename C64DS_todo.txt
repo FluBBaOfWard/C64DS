@@ -1,5 +1,6 @@
 C64 Todo
 
+	Add machineInit.
 	Add cascade from Timer A to timer B.
 	Add address pins (from ULA) to VIC II, make CIA set pins on ULA.
 

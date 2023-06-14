@@ -6,11 +6,8 @@
 	.global soundReset
 	.global VblSound2
 	.global setMuteSoundGUI
-	.global soundUpdate
 
 	.extern pauseEmulation
-
-#define WRITE_BUFFER_SIZE (0x800)
 
 ;@----------------------------------------------------------------------------
 
@@ -32,15 +29,7 @@ soundInit:
 soundReset:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	mov r0,#WRITE_BUFFER_SIZE/2
-	str r0,pcmWritePtr
-	mov r0,#0
-	str r0,pcmReadPtr
-//	ldr spxptr,=sphinx0
-//	bl wsAudioReset			;@ sound
-	mov r0,#WRITE_BUFFER_SIZE
-	ldr r1,=WAVBUFFER
-	bl silenceMix
+	bl m6581Reset			;@ sound
 	ldmfd sp!,{lr}
 	bx lr
 
@@ -78,22 +67,6 @@ silenceLoop:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-soundUpdate:			;@ Should be called at every scanline
-;@----------------------------------------------------------------------------
-	mov r0,#2			;@ 24kHz / (75Hz * 160 scanlines) = 2
-	ldr r1,pcmWritePtr
-	mov r2,r1,lsl#21	;@ Only keep 11 bits
-	add r1,r1,r0
-	str r1,pcmWritePtr
-	ldr r1,=WAVBUFFER
-	add r1,r1,r2,lsr#19
-//	b wsAudioMixer
-	bx lr
-
-;@----------------------------------------------------------------------------
-pcmWritePtr:	.long 0
-pcmReadPtr:		.long 0
-neededExtra:	.long 0
 
 muteSound:
 muteSoundGUI:
@@ -104,8 +77,8 @@ muteSoundChip:
 
 	.section .bss
 	.align 2
-WAVBUFFER:
-	.space WRITE_BUFFER_SIZE*4
+sidChip_0:
+	.space m6581Size
 ;@----------------------------------------------------------------------------
 	.end
 #endif // #ifdef __arm__

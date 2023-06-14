@@ -48,7 +48,6 @@ void myVblank(void) {
 	vblIrqHandler();
 }
 
-
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
@@ -62,10 +61,8 @@ int main(int argc, char **argv) {
 	getInput();
 	initSettings();
 //	machineInit();
-	// Clear DS VRAM and calculate LUTs.
 	gfxInit();
 	machineReset();
-//	loadCart(0,0);
 	if ( initFileHelper() ) {
 		loadSettings();
 //		autoLoadGame();
@@ -84,7 +81,6 @@ int main(int argc, char **argv) {
 	}
 	return 0;
 }
-
 
 //---------------------------------------------------------------------------------
 void pausVBlank(int count) {
