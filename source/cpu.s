@@ -18,6 +18,7 @@
 	.global waitMaskIn
 	.global waitMaskOut
 	.global wram_global_base
+	.global m6502_0
 
 	.syntax unified
 	.arm

@@ -5,6 +5,10 @@
 extern "C" {
 #endif
 
+#include "ARM6526/ARM6526.h"
+
+extern M6526 cia1Base;
+extern M6526 cia2Base;
 extern u32 joyCfg;
 extern u32 EMUinput;
 

@@ -1,4 +1,5 @@
 #include "Shared/nds_asm.h"
+#include "Shared/EmuSettings.h"
 #include "equates.h"
 #include "memory.h"
 #include "ARM6526/ARM6526.i"

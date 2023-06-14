@@ -9,7 +9,7 @@
 #include "Shared/AsmExtra.h"
 #include "Main.h"
 #include "Gui.h"
-//#include "Cart.h"
+#include "Machine.h"
 #include "cpu.h"
 #include "Gfx.h"
 #include "io.h"
@@ -57,6 +57,8 @@ int loadSettings() {
 
 	gBorderEnable = (cfg.config & 1) ^ 1;
 //	gPaletteBank  = cfg.palette;
+	gScaling  = cfg.scaling & SCALED;
+	gFlicker     = cfg.flicker & 1;
 	gGammaValue   = cfg.gammaValue & 0xF;
 	gContrastValue = (cfg.gammaValue>>4) & 0xF;
 	emuSettings   = cfg.emuSettings & ~EMUSPEED_MASK;	// Clear speed setting.
@@ -74,6 +76,8 @@ void saveSettings() {
 	strcpy(cfg.magic,"cfg");
 	cfg.config      = (gBorderEnable & 1) ^ 1;
 //	cfg.palette     = gPaletteBank;
+	cfg.scaling     = gScaling & SCALED;
+	cfg.flicker     = gFlicker & 1;
 	cfg.gammaValue  = (gGammaValue & 0xF) | (gContrastValue<<4);
 	cfg.emuSettings = emuSettings & ~EMUSPEED_MASK;		// Clear speed setting.
 	cfg.sleepTime   = sleepTime;
@@ -158,11 +162,11 @@ void saveNVRAM() {
 }
 
 void loadState() {
-//	loadDeviceState(folderName);
+	loadDeviceState(folderName);
 }
 
 void saveState() {
-//	saveDeviceState(folderName);
+	saveDeviceState(folderName);
 }
 
 /// Reset and wait for C64 to boot.
@@ -198,18 +202,18 @@ int loadC64ROM(const char *fileName) {
 	if ((file = fopen(fileName, "r"))) {
 		fseek(file, 0, SEEK_END);
 		size = ftell(file) - 2;
-		if (size > 0xF000) {
+		fseek(file, 0, SEEK_SET);
+		fread(&fileStart, 1 , 2, file);
+		if ((fileStart + size) > 0xFFFF) {
 			infoOutput("File too large!");
 			size = 0;
 		}
 		else {
 			waitForReBoot();
-			fseek(file, 0, SEEK_SET);
-			fread(&fileStart, 1 , 2, file);
-			fread(&emu_ram_base[fileStart], 1, size, file);
+			fread(&c64Ram[fileStart], 1, size, file);
 			fileEnd = fileStart + size;
-			emu_ram_base[0x2d] = emu_ram_base[0x2f] = emu_ram_base[0x31] = emu_ram_base[0xAE] = (unsigned char)fileEnd;
-			emu_ram_base[0x2e] = emu_ram_base[0x30] = emu_ram_base[0x32] = emu_ram_base[0xAF] = (unsigned char)(fileEnd>>8);
+			c64Ram[0x2d] = c64Ram[0x2f] = c64Ram[0x31] = c64Ram[0xAE] = (unsigned char)fileEnd;
+			c64Ram[0x2e] = c64Ram[0x30] = c64Ram[0x32] = c64Ram[0xAF] = (unsigned char)(fileEnd>>8);
 			strlcpy(currentFilename, fileName, sizeof(currentFilename));
 		}
 		fclose(file);
@@ -227,10 +231,10 @@ int loadC64PrgFake(const u8 *program) {
 	u16 fileStart;
 
 	fileStart = *(u16 *)program;
-	memcpy(&emu_ram_base[fileStart], &program[2], size);
+	memcpy(&c64Ram[fileStart], &program[2], size);
 	fileEnd = fileStart + size;
-	emu_ram_base[0x2d] = emu_ram_base[0x2f] = emu_ram_base[0x31] = emu_ram_base[0xAE] = (unsigned char)fileEnd;
-	emu_ram_base[0x2e] = emu_ram_base[0x30] = emu_ram_base[0x32] = emu_ram_base[0xAF] = (unsigned char)(fileEnd>>8);
+	c64Ram[0x2d] = c64Ram[0x2f] = c64Ram[0x31] = c64Ram[0xAE] = (unsigned char)fileEnd;
+	c64Ram[0x2e] = c64Ram[0x30] = c64Ram[0x32] = c64Ram[0xAF] = (unsigned char)(fileEnd>>8);
 
 	return size;
 }

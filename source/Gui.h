@@ -36,6 +36,7 @@ void debugCrashInstruction(void);
 void controllerSet(void);
 void swapABSet(void);
 
+void scalingSet(void);
 void gammaSet(void);
 void contrastSet(void);
 void bgrLayerSet(void);

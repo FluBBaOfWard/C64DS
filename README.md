@@ -2,7 +2,7 @@
 
 <img align="right" width="220" src="./logo.png" />
 
-This is a Bandai WonderSwan (Color/Crystal) & PocketChallenge V2 emulator for the Nintendo DS.
+This is a Commodore 64 (PAL) emulator for the Nintendo DS.
 
 ## How to use
 
@@ -11,16 +11,12 @@ This is where settings and save files end up.
 2. Now put game/bios files into a folder where you have (C64) roms.
 3. Depending on your flashcart you might have to DLDI patch the emulator.
 
-The save files should be compatible with most other WonderSwan emulators.
-
 When the emulator starts, you can either press L+R or tap on the screen to open
 up the menu.
 Now you can use the cross or touchscreen to navigate the menus, A or double tap
 to select an option, B or the top of the screen to go back a step.
 
 To select between the tabs use R & L or the touchscreen.
-
-Hold Start while starting a game to enter the boot rom settings, the internal EEPROM is saved when saving settings.
 
 ## Menu
 
@@ -38,12 +34,15 @@ Hold Start while starting a game to enter the boot rom settings, the internal EE
 
 	Controller:
 		Autofire: Select if you want autofire.
-		Controller: 2P start a 2 player game.
-		Swap A/B: Swap which NDS button is mapped to which WS button.
+		Controller: Which port the controller is plugged into, be prepared to switch often
+		Swap A/B: Swap which NDS button is mapped to the C64 fire button.
 	Display:
+		Display: Here you can select if you want scaled or unscaled screenmode.
+			Unscaled mode:  L & R buttons scroll the screen up and down.
+		Scaling: Here you can select if you want flicker or barebones lineskip.
 		Gamma: Lets you change the gamma ("brightness").
 		Contrast: Lets you change the contrast.
-		B&W Palette: Here you can select the palette for B & W games.
+		Palettes: Here you can select the palette.
 	Machine Settings:
 		Machine: Select the emulated machine.
 		Select WS Bios: Load a real WS Bios.

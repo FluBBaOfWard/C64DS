@@ -5,6 +5,8 @@
 	.global BankSwitch_R
 	.global BankSwitch_0_W
 	.global BankSwitch_1_W
+
+	.global c64Ram
 	.global Chargen
 	.global Basic
 	.global Kernal
@@ -20,7 +22,7 @@ machineReset:
 	stmfd sp!,{r4-r11,lr}
 
 	ldr r10,=wram_global_base
-	ldr r0,=emu_ram_base
+	ldr r0,=c64Ram
 	ldr m6502zpage,[r0]
 	add m6502zpage,m6502zpage,#0x1FC
 	bic m6502zpage,m6502zpage,#0x1FC
@@ -226,12 +228,20 @@ setPort:
 ;@----------------------------------------------------------------------------
 data_out:
 	.long	0x3f
-
+c64Ram:
+	.long ramAllocation + 0x400
+gMachine:
+	.byte 0
+	.space 3
 
 ;@----------------------------------------------------------------------------
 	.pool
 //	.section .bss
 	.align 2
+ramAllocation:
+	.space 0x400		;@ Stupid handling of Palette RAM, FIX!
+	.space 0x10000
+	.space 0x200		;@ Padding for alignment
 c64Program:
 //	.incbin "GianaSisters.prg"
 //	.align 2

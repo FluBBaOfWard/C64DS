@@ -8,19 +8,11 @@
 #include "Gui.h"
 #include "FileHandling.h"
 #include "EmuFont.h"
+#include "Machine.h"
 #include "cpu.h"
 #include "Gfx.h"
 #include "io.h"
 #include "Sound.h"
-
-extern void machineReset(void);
-
-//==========================================================================
-
-unsigned char *emu_ram_alloc;
-unsigned char *emu_ram_base;
-
-//==========================================================================
 
 static void checkTimeOut(void);
 static void setupGraphics(void);
@@ -48,18 +40,6 @@ static const u8 guiPalette[] = {
 	0xF7,0xF7,0xC0, 0xFF,0xFF,0xE0, 0x00,0x00,0x60, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00
 };
 
-int packState(void *statePtr) {
-	return 0;
-}
-
-void unpackState(const void *statePtr) {
-}
-
-int getStateSize() {
-	return 0;
-}
-
-
 //---------------------------------------------------------------------------------
 void myVblank(void) {
 //---------------------------------------------------------------------------------
@@ -75,9 +55,6 @@ int main(int argc, char **argv) {
 	if (argc > 1) {
 		enableExit = true;
 	}
-	// Allocate C64 ram from the heap
-	emu_ram_alloc = malloc(0x30600);
-	emu_ram_base = emu_ram_alloc + 0x400;
 	setupGraphics();
 	setupStream();
 	irqSet(IRQ_VBLANK, myVblank);

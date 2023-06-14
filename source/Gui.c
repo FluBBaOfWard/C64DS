@@ -44,8 +44,8 @@ const fptr fnList1[] = {selectGame, loadState, saveState, loadNVRAM, saveNVRAM, 
 const fptr fnList2[] = {ui4, ui5, ui6, ui7, ui8};
 const fptr fnList3[] = {uiDummy};
 const fptr fnList4[] = {autoBSet, autoASet, controllerSet, swapABSet};
-const fptr fnList5[] = {gammaSet, contrastSet, paletteChange, borderSet};
-const fptr fnList6[] = {machineSet, selectBnWBios, selectColorBios, selectCrystalBios, speedHackSet /*languageSet*/};
+const fptr fnList5[] = {scalingSet, flickSet, gammaSet, contrastSet, paletteChange, borderSet};
+const fptr fnList6[] = {machineSet, selectBnWBios, selectColorBios, selectCrystalBios /*languageSet*/};
 const fptr fnList7[] = {speedSet, refreshChgSet, autoStateSet, autoNVRAMSet, autoSettingsSet, autoPauseGameSet, powerSaveSet, screenSwapSet, sleepSet};
 const fptr fnList8[] = {debugTextSet, bgrLayerSet, sprLayerSet, stepFrame};
 const fptr fnList9[] = {exitEmulator, backOutOfMenu};
@@ -63,7 +63,7 @@ const char *const autoTxt[]  = {"Off", "On", "With R"};
 const char *const speedTxt[] = {"Normal", "200%", "Max", "50%"};
 const char *const brighTxt[] = {"I", "II", "III", "IIII", "IIIII"};
 const char *const sleepTxt[] = {"5min", "10min", "30min", "Off"};
-const char *const ctrlTxt[]  = {"1P", "2P"};
+const char *const ctrlTxt[]  = {"Port 1", "Port 2"};
 const char *const dispTxt[]  = {"Unscaled", "Scaled"};
 const char *const flickTxt[] = {"No Flicker", "Flicker"};
 
@@ -159,21 +159,19 @@ void uiController() {
 
 void uiDisplay() {
 	setupSubMenu("Display Settings");
+	drawSubItem("Display:", dispTxt[gScaling&SCALED]);
+	drawSubItem("Scaling:", flickTxt[gFlicker]);
 	drawSubItem("Gamma:", brighTxt[gGammaValue]);
 	drawSubItem("Contrast:", brighTxt[gContrastValue]);
-//	drawSubItem("B&W Palette:", palTxt[gPaletteBank]);
 	drawSubItem("Border:", autoTxt[gBorderEnable]);
 }
 
 static void uiMachine() {
 	setupSubMenu("Machine Settings");
 	drawSubItem("Machine:", machTxt[0]);
-	drawSubItem("Select WS Bios ->", NULL);
-	drawSubItem("Select WS Color Bios ->", NULL);
-	drawSubItem("Select WS Crystal Bios ->", NULL);
-	drawSubItem("Import Internal EEPROM ->", NULL);
-	drawSubItem("Clear Internal EEPROM", NULL);
-	drawSubItem("Cpu Speed Hacks:", autoTxt[(emuSettings&ALLOW_SPEED_HACKS)>>17]);
+	drawSubItem("Select Kernal ->", NULL);
+	drawSubItem("Select Basic ->", NULL);
+	drawSubItem("Select Chargen ->", NULL);
 //	drawSubItem("Language: ", langTxt[gLang]);
 }
 
@@ -200,7 +198,7 @@ void uiDebug() {
 
 
 void nullUINormal(int key) {
-	if (!(emuSettings & (1<<12))) {
+	if (!(emuSettings & ENABLE_LIVE_UI)) {
 		nullUIDebug(key);		// Just check touch, open menu.
 		return;
 	}
@@ -233,12 +231,6 @@ void debugIO(u16 port, u8 val, const char *message) {
 	debugOutput(debugString);
 }
 //---------------------------------------------------------------------------------
-void debugIOUnimplR(u16 port, u8 val) {
-	debugIO(port, val, "Unimpl R port:");
-}
-void debugIOUnimplW(u16 port, u8 val) {
-	debugIO(port, val, "Unimpl W port:");
-}
 void debugIOUnmappedR(u16 port, u8 val) {
 	debugIO(port, val, "Unmapped R port:");
 }
@@ -246,10 +238,10 @@ void debugIOUnmappedW(u16 port, u8 val) {
 	debugIO(port, val, "Unmapped W port:");
 }
 void debugUndefinedInstruction() {
-	debugOutput("Undefined Instruction.");
+	debugOutput("Undocumented Instruction.");
 }
 void debugCrashInstruction() {
-	debugOutput("CPU Crash! (0xF1)");
+	debugOutput("CPU Crash! (JAM/KIL)");
 }
 
 void nullUIC64(int key) {
@@ -298,6 +290,12 @@ void controllerSet() {				// See io.s: refreshEMUjoypads
 /// Swap A & B buttons
 void swapABSet() {
 	joyCfg ^= 0x400;
+}
+
+/// Turn on/off scaling
+void scalingSet(){
+	gScaling ^= SCALED;
+//	refreshGfx();
 }
 
 /// Change gamma (brightness)
@@ -349,9 +347,9 @@ void borderSet() {
 }
 
 void machineSet() {
-//	gMachineSet++;
-//	if (gMachineSet >= HW_SELECT_END) {
-//		gMachineSet = 0;
+//	gMachine++;
+//	if (gMachine >= HW_SELECT_END) {
+//		gMachine = 0;
 //	}
 }
 
