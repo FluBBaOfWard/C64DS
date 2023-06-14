@@ -52,7 +52,6 @@ runStart:
 	ldmia r0,{m6502nz-m6502pc,m6502zpage}	;@ Restore M6502 state
 	bl ciaTodCount
 	bl newFrame					;@ Display update
-
 ;@----------------------------------------------------------------------------
 c64FrameLoop:
 ;@----------------------------------------------------------------------------
@@ -65,12 +64,7 @@ c64FrameLoop:
 	bl m6526RunXCycles
 
 	bl m6569DoScanline
-
-	ldr r1,[r10,#scanline]
-	add r1,r1,#1
-	str r1,[r10,#scanline]
-	ldr r0,[r10,#lastscanline]
-	cmp r1,r0
+	cmp r0,#0
 	bne c64FrameLoop
 ;@-------------------------------------------------
 	bl endFrame					;@ Display update
@@ -125,12 +119,7 @@ c64StepLoop:
 	bl m6526RunXCycles
 
 	bl m6569DoScanline
-
-	ldr r1,[r10,#scanline]
-	add r1,r1,#1
-	str r1,[r10,#scanline]
-	ldr r0,[r10,#lastscanline]
-	cmp r1,r0
+	cmp r0,#0
 	bne c64StepLoop
 ;@-------------------------------------------------
 	bl endFrame					;@ Display update

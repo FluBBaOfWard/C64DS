@@ -1,12 +1,10 @@
 C64 Todo
 
-	Fix better loading of prg files (wait for reset to finish, write run+return after loading).
 	Add cascade from Timer A to timer B.
 	Add address pins (from ULA) to VIC II, make CIA set pins on ULA.
 
 GFX:
-	Fix sprites so they are as good as before.
-	See VIC todo.
+	See ARM6569 todo.
 
 GUI:
 	Eng/Jap.
@@ -17,7 +15,7 @@ CPU:
 	See ARM6502 Todo.
 
 Sound:
-	See SID todo.
+	See ARM6581 todo.
 
 Misc:
 
@@ -29,4 +27,3 @@ Games With Glitches:
 
 Games With Glitches Fixed:
 
-Speedhacks:

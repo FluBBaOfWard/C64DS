@@ -10,7 +10,7 @@
 #include "Main.h"
 #include "Gui.h"
 //#include "Cart.h"
-//#include "cpu.h"
+#include "cpu.h"
 #include "Gfx.h"
 #include "io.h"
 #include "Memory.h"
@@ -165,6 +165,30 @@ void saveState() {
 //	saveDeviceState(folderName);
 }
 
+/// Reset and wait for C64 to boot.
+static void waitForReBoot(void) {
+	int i;
+	machineReset();
+	for (i = 0; i < 150; i++ ) {
+		stepFrame();
+	}
+	SetC64Key(9, 15, 1);
+	stepFrame();
+	SetC64Key(9, 15, 0);
+	SetC64Key(15, 15, 1);
+	stepFrame();
+	SetC64Key(15, 15, 0);
+	SetC64Key(15, 19, 1);
+	stepFrame();
+	SetC64Key(15, 19, 0);
+	stepFrame();
+	stepFrame();
+	SetC64Key(29, 17, 1);
+	stepFrame();
+	SetC64Key(29, 17, 0);
+}
+
+//---------------------------------------------------------------------------------
 int loadC64ROM(const char *fileName) {
 	int size = 0;
 	int fileEnd;
@@ -179,6 +203,7 @@ int loadC64ROM(const char *fileName) {
 			size = 0;
 		}
 		else {
+			waitForReBoot();
 			fseek(file, 0, SEEK_SET);
 			fread(&fileStart, 1 , 2, file);
 			fread(&emu_ram_base[fileStart], 1, size, file);

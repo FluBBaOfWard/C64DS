@@ -640,7 +640,7 @@ endFrame:	;@ Called just before screen end (~line 240)	(r0-r2 safe to use)
 PaletteTxAll:		;@ Called from ui.c
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r7,r10,lr}
-	ldr globalptr,=wram_global_base
+	ldr vic2ptr,=wram_global_base
 	ldr r2,=c64_palette_mod
 	ldr r3,=pal_buffer
 	mov r7,#0x1E
@@ -827,8 +827,8 @@ bgrdLoop:
 	subs r8,r8,#1
 	bne bgrdLoop
 
-	ldr globalptr,=wram_global_base
-	ldrb r0,[r10,#vicBgr0Col]	;@ Background color
+	ldr vic2ptr,=wram_global_base
+	ldrb r0,[vic2ptr,#vicBgr0Col]	;@ Background color
 	and r0,r0,#0x0F
 	orr r0,r11,r0,lsl#4
 	orr r0,r0,r0,lsl#8
@@ -997,8 +997,8 @@ bgrdLoop2:
 	subs r8,r8,#1
 	bne bgrdLoop2
 
-	ldr globalptr,=wram_global_base
-	ldrb r0,[r10,#vicBgr0Col]	;@ Background color
+	ldr vic2ptr,=wram_global_base
+	ldrb r0,[vic2ptr,#vicBgr0Col]	;@ Background color
 	and r0,r0,#0x0F
 	orr r0,r0,#0x30000000
 	mov r0,r0,ror#28
@@ -1143,8 +1143,8 @@ bgrdLoop5:
 	subs r8,r8,#1
 	bne bgrdLoop5
 
-	ldr globalptr,=wram_global_base
-	ldrb r0,[r10,#vicBgr0Col]	;@ Background color
+	ldr vic2ptr,=wram_global_base
+	ldrb r0,[vic2ptr,#vicBgr0Col]	;@ Background color
 	and r0,r0,#0x0F
 	orr r0,r11,r0,lsl#12
 	orr r0,r0,r0,lsr#8
