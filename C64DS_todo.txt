@@ -1,6 +1,8 @@
 C64 Todo
 
+	Fix Sprite to Sprite collision.
 	Add machineInit.
+	Add support for loading carts (.crt).
 	Add cascade from Timer A to timer B.
 	Add address pins (from ULA) to VIC II, make CIA set pins on ULA.
 

@@ -43,7 +43,7 @@ IO_reset:
 
 	ldr r0,=cia2Base
 	bl m6526Init
-	ldr r1,=SetC64GfxBases
+	ldr r1,=m6569SetMemBank
 	str r1,[r0,#ciaPortAWriteFunc]
 	ldr r1,=setCia2Nmi
 	str r1,[r0,#ciaIrqFunc]

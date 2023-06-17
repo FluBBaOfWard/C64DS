@@ -12,7 +12,6 @@
 	.global newFrame
 	.global endFrame
 	.global RenderLine
-	.global SetC64GfxBases
 	.global SetC64GfxMode
 
 	.global gScaling
@@ -491,48 +490,12 @@ yStart:			.byte 0
 ;@----------------------------------------------------------------------------
 	.pool
 ;@----------------------------------------------------------------------------
-SetC64GfxBases:
-;@----------------------------------------------------------------------------
-	stmfd sp!,{r0,r12}
-	ldr r2,=cia2Base
-	ldrb r0,[r2,#ciaDataPortA]	;@ VIC bank, 0x4000*4
-	eor r0,r0,#0x03
-	and r0,r0,#0x03
-	ldrb r2,[r10,#vicMemCtrl]	;@ 0xD018
-	and r1,r2,#0xF0
-	orr r1,r1,r0,lsl#8
-	add r1,m6502zpage,r1,lsl#6
-
-	ldr r12,=c64_map_base
-	str r1,[r12]
-
-	and r1,r2,#0x0E
-	orr r0,r1,r0,lsl#4
-
-	and r1,r0,#0x1C
-	cmp r1,#0x04				;@ 0x1000/0x9000
-	ldreq r2,=Chargen			;@ r2 = CHRROM
-	movne r2,m6502zpage			;@ r2 = RAM
-
-	bic r1,r0,#0x07
-	add r1,r2,r1,lsl#10
-	ldr r12,=c64_bmp_base
-	str r1,[r12]
-
-	andeq r0,r0,#0x02
-	add r1,r2,r0,lsl#10
-	ldr r12,=c64_chr_base
-	str r1,[r12]
-
-	ldmfd sp!,{r0,r12}
-	bx lr
-;@----------------------------------------------------------------------------
 SetC64GfxMode:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0,r12}
 
-	ldrb r0,[r10,#vicCtrl1]		;@ VIC control 1
-	ldrb r1,[r10,#vicCtrl2]		;@ VIC control 2
+	ldrb r0,[vic2ptr,#vicCtrl1]	;@ VIC control 1
+	ldrb r1,[vic2ptr,#vicCtrl2]	;@ VIC control 2
 
 	mov r0,r0,lsr#4
 	and r0,r0,#0x07
@@ -566,7 +529,7 @@ RenderModeTbl:
 newFrame:	;@ Called before line 0	(r0-r9 safe to use)
 ;@----------------------------------------------------------------------------
 	mov r0,#-1					;@ Rambo checks for IRQ on line 0
-	str r0,[r10,#scanline]		;@ Reset scanline count
+	str r0,[vic2ptr,#scanline]	;@ Reset scanline count
 
 	ldr r0,=frameTotal
 	ldr r0,[r0]
@@ -763,14 +726,12 @@ RenderTiles:
 ;@----------------------------------------------------------------------------
 
 //	mov r11,r11
-	ldr r2,=c64_map_base
-	ldr r5,[r2]
+	ldr r5,[vic2ptr,#vicMapBase]
 	sub r6,m6502zpage,#0x400	;@ Bg colormap
 	add r5,r5,r0
 	add r6,r6,r0
 
-	ldr r0,=c64_chr_base
-	ldr r7,[r0]					;@ Bg tile bitmap
+	ldr r7,[vic2ptr,#vicChrBase]	;@ Bg tile bitmap
 	ldr r12,=chrDecode3
 	add r7,r7,r1
 
@@ -834,16 +795,12 @@ bgrdLoop:
 	orr r0,r11,r0,lsl#4
 	orr r0,r0,r0,lsl#8
 	orr r0,r0,r0,lsl#16
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
+	mov r1,r0
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
 
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
@@ -852,18 +809,16 @@ bgrdLoop:
 RenderTilesECM:				;@ ExtendedColorMode
 ;@----------------------------------------------------------------------------
 
-	ldr r2,=c64_map_base
-	ldr r5,[r2]
+	ldr r5,[vic2ptr,#vicMapBase]
 	sub r6,m6502zpage,#0x400	;@ Bg colormap
 	add r5,r5,r0
 	add r6,r6,r0
 
-	ldr r0,=c64_chr_base
-	ldr r7,[r0]					;@ Bg tile bitmap
+	ldr r7,[vic2ptr,#vicChrBase]	;@ Bg tile bitmap
 	ldr r12,=chrDecode3
 	add r7,r7,r1
 
-	ldrb r0,[r10,#vicBgr0Col]!
+	ldrb r0,[vic2ptr,#vicBgr0Col]!
 	add lr,r9,#320
 
 	ldr r11,=0x03030303
@@ -943,22 +898,20 @@ bgrdLoop1:
 RenderTilesMCM:				;@ MultiColorMode
 ;@----------------------------------------------------------------------------
 
-	ldr r2,=c64_map_base
-	ldr r5,[r2]
+	ldr r5,[vic2ptr,#vicMapBase]
 	sub r6,m6502zpage,#0x400	;@ Bg colormap
 	add r5,r5,r0
 	add r6,r6,r0
 
-	ldr r0,=c64_chr_base
-	ldr r7,[r0]					;@ Bg tile bitmap
+	ldr r7,[vic2ptr,#vicChrBase]	;@ Bg tile bitmap
 	ldr lr,=chrDecode3			;@ Mono
 	add r7,r7,r1
 
 	ldr r11,=0x03030300
-	ldrb r0,[r10,#vicBgr1Col]
+	ldrb r0,[vic2ptr,#vicBgr1Col]
 	and r0,r0,#0x0F
 	orr r11,r11,r0,lsl#12
-	ldrb r0,[r10,#vicBgr2Col]
+	ldrb r0,[vic2ptr,#vicBgr2Col]
 	and r0,r0,#0x0F
 	orr r11,r11,r0,lsl#20
 
@@ -1005,28 +958,22 @@ bgrdLoop2:
 	mov r0,r0,ror#28
 	orr r0,r0,r0,lsl#8
 	orr r0,r0,r0,lsl#16
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
+	mov r1,r0
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
 
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
 RenderBmp:
 ;@----------------------------------------------------------------------------
-	ldr r2,=c64_map_base
-	ldr r5,[r2]
+	ldr r5,[vic2ptr,#vicMapBase]
 	add r5,r5,r0
 
-	ldr r2,=c64_bmp_base
-	ldr r6,[r2]					;@ Bg tile bitmap
+	ldr r6,[vic2ptr,#vicBmpBase]	;@ Bg tile bitmap
 	ldr r12,=chrDecode3
 	add r6,r6,r0,lsl#3
 	add r6,r6,r1
@@ -1095,14 +1042,12 @@ bgrdLoop4:
 RenderBmpMCM:				;@ MultiColorMode
 ;@----------------------------------------------------------------------------
 
-	ldr r2,=c64_map_base
-	ldr r4,[r2]
+	ldr r4,[vic2ptr,#vicMapBase]
 	sub r5,m6502zpage,#0x400	;@ Bg colormap
 	add r4,r4,r0
 	add r5,r5,r0
 
-	ldr r2,=c64_bmp_base
-	ldr r6,[r2]					;@ Bg tile bitmap
+	ldr r6,[vic2ptr,#vicBmpBase]	;@ Bg tile bitmap
 	add r6,r6,r0,lsl#3
 	add r6,r6,r1
 
@@ -1140,7 +1085,6 @@ bgrdLoop5:
 
 	stmia r9!,{r3,r7}
 
-
 	subs r8,r8,#1
 	bne bgrdLoop5
 
@@ -1150,16 +1094,12 @@ bgrdLoop5:
 	orr r0,r11,r0,lsl#12
 	orr r0,r0,r0,lsr#8
 	orr r0,r0,r0,lsl#16
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
-	str r0,[r9],#4
+	mov r1,r0
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
+	stmia r9!,{r0,r1}
 
 	ldmfd sp!,{r1-r11,lr}
 	bx lr
@@ -1173,10 +1113,11 @@ RenderBlankLine:
 	orr r0,r0,#3
 	orr r0,r0,r0,lsl#8
 	orr r0,r0,r0,lsl#16
-	mov r1,#90					;@ Screen plus border
+	mov r1,r0
+	mov r2,#45					;@ Screen plus border
 blankLoop:
-	str r0,[r9],#4
-	subs r1,r1,#1
+	stmia r9!,{r0,r1}
+	subs r2,r2,#1
 	bne blankLoop
 
 	ldmfd sp!,{r1-r11,lr}
@@ -1306,19 +1247,15 @@ VRAM_spr:
 	add r0,r0,r8,lsl#4
 	add r5,r5,r0,lsl#9
 
-	ldr r0,=c64_map_base
-	ldr r12,[r0]				;@ Spr tile bitmap
+	ldr r12,[vic2ptr,#vicMapBase]	;@ Spr tile bitmap
 	add r12,r12,#0x3F8
 	ldrb r0,[r12,r8]			;@ Tile nr.
 
-	ldr r2,=cia2Base
-	ldrb r2,[r2,#ciaDataPortA]	;@ VIC bank, 0x4000*4
-	eor r2,r2,#0x03
-	and r2,r2,#0x03
+	ldrb r2,[vic2ptr,#vicMemoryBank]
 	add r12,m6502zpage,r2,lsl#14
 	add r12,r12,r0,lsl#6
 
-	ldrb r0,[r10,#vicSprMode]
+	ldrb r0,[vic2ptr,#vicSprMode]
 	tst r0,r4,lsl r8
 	beq VRAM_spr_mono
 
@@ -1425,13 +1362,6 @@ obj_buf_ptr1:
 	.long 0
 obj_counter:
 	.long 0,0
-
-c64_map_base:
-	.long 0
-c64_chr_base:
-	.long 0
-c64_bmp_base:
-	.long 0
 
 #ifdef NDS
 	.section .dtcm, "ax", %progbits				;@ For the NDS

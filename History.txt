@@ -1,7 +1,7 @@
 C64DS revision history
 -=-=-=-=-=-=-=-=-=-=-=-
 
-V0.2.0 - 2023-06-14 (FluBBa)
+V0.2.0 - 2023-06-17 (FluBBa)
 	Reworked for devkitARM.
 
 V0.1.1 - 2023-06-04 (FluBBa)
