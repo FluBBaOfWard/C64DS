@@ -11,8 +11,9 @@ extern u16 EMUPALBUFF[0x400];
 extern void *tile_base;
 extern void *obj_base;
 
-void vblIrqHandler(void);
 void gfxInit(void);
+void vblIrqHandler(void);
+void paletteInit(u8 gammaVal);
 
 #ifdef __cplusplus
 }

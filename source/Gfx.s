@@ -6,9 +6,10 @@
 #include "ARM6569/ARM6569.i"
 #include "ARM6502/M6502mac.h"
 
-	.global vblIrqHandler
 	.global gfxInit
 	.global gfxReset
+	.global paletteInit
+	.global vblIrqHandler
 	.global newFrame
 	.global endFrame
 	.global RenderLine
@@ -38,7 +39,7 @@ gfxInit:	;@ (called from main.c) only need to call once
 	mov r1,#0
 	mov r2,#0x8000
 	bl memset_					;@ Clear
-	
+
 	ldr r0,=obj_base
 	ldr r0,[r0]
 	mov r2,#0x8000
@@ -64,26 +65,25 @@ gfxInit:	;@ (called from main.c) only need to call once
 	add r1,r1,#0x20000
 	str r1,[r0]
 
-	mov r2,#0xffffff00			;@ Build bg tile decode tbl
+	mov r2,#0xffffff00			;@ Build bg tile decode tbl for mono sprites.
 	ldr r3,=chrDecode
 ppi0:
-	mov r0,#0
-	tst r2,#0x01
-	orrne r0,r0,#0x10000000
+	ands r0,r2,#0x01
+	movne r0,#0x20000000
 	tst r2,#0x02
-	orrne r0,r0,#0x01000000
+	orrne r0,r0,#0x02000000
 	tst r2,#0x04
-	orrne r0,r0,#0x00100000
+	orrne r0,r0,#0x00200000
 	tst r2,#0x08
-	orrne r0,r0,#0x00010000
+	orrne r0,r0,#0x00020000
 	tst r2,#0x10
-	orrne r0,r0,#0x00001000
+	orrne r0,r0,#0x00002000
 	tst r2,#0x20
-	orrne r0,r0,#0x00000100
+	orrne r0,r0,#0x00000200
 	tst r2,#0x40
-	orrne r0,r0,#0x00000010
+	orrne r0,r0,#0x00000020
 	tst r2,#0x80
-	orrne r0,r0,#0x00000001
+	orrne r0,r0,#0x00000002
 	str r0,[r3],#4
 	adds r2,r2,#1
 	bne ppi0
@@ -225,7 +225,7 @@ gfxReset:	;@ Called with CPU reset
 	bl BorderInit
 //	bl InitBGTiles
 	bl SpriteScaleInit
-	bl paletteinit				;@ do palette mapping
+	bl paletteInit				;@ do palette mapping
 	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
@@ -274,15 +274,17 @@ border_loop_2:
 	ldmfd sp!,{r4-r5,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
-paletteinit:	;@ r0-r3 modified.
-//called by ui.c:  void map_palette(char gammavalue)
+paletteInit:	;@ r0-r3 modified.
+	.type paletteInit STT_FUNC
+;@ Called by Gui.c:  void paletteInit(u8 gammavalue)
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r7,lr}
 
 	adr r7,C64Palette
 	ldr r6,=c64_palette_mod
+	mov r1,r0
 //	ldrb r1,gammavalue			;@ Gamma value = 0 -> 4
-	mov r1,#1					;@ Gamma value = 0 -> 4
+//	mov r1,#1					;@ Gamma value = 0 -> 4
 	mov r4,#15					;@
 nomap:							;@ Map rrrrrrrrggggggggbbbbbbbb  ->  0bbbbbgggggrrrrr
 	ldrb r0,[r7],#1
@@ -378,10 +380,10 @@ vblIrqHandler:
 
 	ldr r1,=0x010B				;@ Y-delta
 	mov r5,#0
-	moveq r5,#0x000B
+	movmi r5,#0x000B
 //	mov r7,r5					;@ Y-Offset
 	mov r8,#0
-	moveq r8,#0x0040
+	movmi r8,#0x0040
 	mov r2,#192
 loop0:
 	ldrb r0,[r3,r5,lsr#8]
@@ -433,14 +435,13 @@ loop1:
 	orr r4,r4,#128*2			;@ 128 sprites * 2 longwords
 	stmia r1,{r2-r4}			;@ DMA3 go
 
-	ldr r1,=dma_buffer0
-	add r2,r12,#REG_BG2X
-	ldr r3,=0x96600001			;@ 1 word(s)
-	ldr r0,[r1],#4				;@ Change this if you change number of words transfered!
-	str r0,[r2]
-	str r1,[r12,#REG_DMA2SAD]
-	str r2,[r12,#REG_DMA2DAD]
-	str r3,[r12,#REG_DMA2CNT]	;@ DMA2 Go!
+	add r1,r12,#REG_DMA2SAD
+	ldr r2,=dma_buffer0
+	add r3,r12,#REG_BG2X
+	ldr r4,=0x96600001			;@ 1 word(s)
+	ldr r0,[r2],#4				;@ Change this if you change number of words transfered!
+	str r0,[r3]
+	stmia r1,{r2-r4}			;@ DMA2 go
 
 ;@----------------- GUI screen -------------------
 	add r12,r12,#0x1000			;@ SUB gfx
@@ -541,7 +542,6 @@ newFrame:	;@ Called before line 0	(r0-r9 safe to use)
 	str r0,[r1]
 	str r0,[r1,#4]
 
-
 	ldr r1,=obj_buf_ptr0
 	ldr r1,[r1]
 	mov r0,#0x2c0				;@ Double, y=191
@@ -571,7 +571,7 @@ endFrame:	;@ Called just before screen end (~line 240)	(r0-r2 safe to use)
 	bl PaletteTxAll
 ;@--------------------------
 	ldrb r0,[vic2ptr,#vicCtrl2]
-	bl VIC_ctrl2_W
+	bl vicCtrl2W
 
 //	mrs r4,cpsr
 //	orr r1,r4,#0x80				;@ --> Disable IRQ.
@@ -594,7 +594,6 @@ endFrame:	;@ Called just before screen end (~line 240)	(r0-r2 safe to use)
 
 //	mov r0,#1
 //	str r0,oambufferready
-
 
 //	msr cpsr_cf,r4				;@ --> restore mode,Enable IRQ.
 
@@ -698,7 +697,6 @@ noNewTileRow:
 	str r0,line_y_offset
 	add r1,r3,r2
 
-
 	bic r0,r1,#0x07
 	and r1,r1,#0x07
 	add r0,r0,r0,lsl#2			;@ x5
@@ -747,40 +745,33 @@ bgrdLoop:
 	ldrb r3,[r7,r3,lsl#3]		;@ Read bitmap data
 	and r10,lr,r1
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mul r4,r2,r10
 	mul r10,r3,r10
 	stmia r9!,{r4,r10}
-
 
 	and r3,r0,#0x0000FF00
 	ldrb r3,[r7,r3,lsr#5]		;@ Read bitmap data
 	and r10,lr,r1,lsr#8
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mul r4,r2,r10
 	mul r10,r3,r10
 	stmia r9!,{r4,r10}
-
 
 	and r3,r0,#0x00FF0000
 	ldrb r3,[r7,r3,lsr#13]		;@ Read bitmap data
 	and r10,lr,r1,lsr#16
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mul r4,r2,r10
 	mul r10,r3,r10
 	stmia r9!,{r4,r10}
 
-
 	and r3,r0,#0xFF000000
 	ldrb r3,[r7,r3,lsr#21]		;@ Read bitmap data
 	mov r10,r1,lsr#24
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mul r4,r2,r10
 	mul r10,r3,r10
@@ -832,47 +823,39 @@ bgrdLoop1:
 	ldrb r3,[r7,r3,lsl#3]		;@ Read bitmap data
 	and r4,r1,#0x000000FF
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mul r2,r4,r2
 	mul r4,r3,r4
 	stmia r9!,{r2,r4}
 
-
 	and r3,r0,#0x00003F00
 	ldrb r3,[r7,r3,lsr#5]		;@ Read bitmap data
 	and r4,r1,#0x0000FF00
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mov r4,r4,lsr#8
 	mul r2,r4,r2
 	mul r4,r3,r4
 	stmia r9!,{r2,r4}
 
-
 	and r3,r0,#0x003F0000
 	ldrb r3,[r7,r3,lsr#13]		;@ Read bitmap data
 	and r4,r1,#0x00FF0000
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mov r4,r4,lsr#16
 	mul r2,r4,r2
 	mul r4,r3,r4
 	stmia r9!,{r2,r4}
 
-
 	and r3,r0,#0x3F000000
 	ldrb r3,[r7,r3,lsr#21]		;@ Read bitmap data
 	mov r4,r1,lsr#24
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mul r1,r2,r4
 	mul r4,r3,r4
 	stmia r9!,{r1,r4}
-
 
 	and r2,r0,#0x000000C0		;@ Background color.
 	ldrb r3,[r10,r2,lsr#6]
@@ -921,7 +904,7 @@ RenderTilesMCM:				;@ MultiColorMode
 bgrdLoop2:
 	ldrb r0,[r5],#1				;@ Read from C64 Tilemap RAM
 	ldrb r1,[r6],#1				;@ Read from C64 Color RAM (color 3)
-	
+
 	bic r11,r11,#0xF0000000
 	orrs r11,r11,r1,lsl#28
 	bic r11,r11,#0x80000000		;@ Clear multi color bit
@@ -992,44 +975,37 @@ bgrdLoop4:
 	ldrb r3,[r6],#8				;@ Read bitmap data
 	and r4,r0,#0x000000FF
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mul r2,r4,r2
 	mul r4,r3,r4
 	stmia r9!,{r2,r4}
 
-
 	ldrb r3,[r6],#8				;@ Read bitmap data
 	and r4,r0,#0x0000FF00
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mov r4,r4,lsr#8
 	mul r2,r4,r2
 	mul r4,r3,r4
 	stmia r9!,{r2,r4}
 
-
 	ldrb r3,[r6],#8				;@ Read bitmap data
 	and r4,r0,#0x00FF0000
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mov r4,r4,lsr#16
 	mul r2,r4,r2
 	mul r4,r3,r4
 	stmia r9!,{r2,r4}
 
-
 	ldrb r3,[r6],#8				;@ Read bitmap data
 	mov r4,r0,lsr#24
 	add r3,r12,r3,lsl#3
-
 	ldmia r3,{r2,r3}
 	mul r0,r2,r4
 	mul r4,r3,r4
 	stmia r9!,{r0,r4}
-	
+
 	orr r1,r11,r1,lsl#4
 	str r1,[r10],#4				;@ Background color
 
@@ -1058,7 +1034,7 @@ RenderBmpMCM:				;@ MultiColorMode
 bgrdLoop5:
 	ldrb r0,[r4],#1				;@ Read from C64 Tilemap RAM (color 1,2)
 	ldrb r1,[r5],#1				;@ Read from C64 Color RAM (color 3)
-	
+
 	mov r0,r0,ror#4
 	orr r1,r11,r1,lsl#28
 	ldrb r2,[r6],#8				;@ Read bitmap data
@@ -1257,9 +1233,9 @@ VRAM_spr:
 
 	ldrb r0,[vic2ptr,#vicSprMode]
 	tst r0,r4,lsl r8
-	beq VRAM_spr_mono
 
-	ldr r1,=chrDecode2
+	ldr r1,=chrDecode2			;@ Multi color
+	ldreq r1,=chrDecode			;@ High resolution
 
 	mov r4,#24
 	mov r2,#0
@@ -1279,36 +1255,6 @@ sprLoop2:
 	addeq r5,r5,#96
 	cmp r4,#3
 	bne sprLoop2
-
-	ldmfd sp!,{r1}
-	bx lr
-;@----------------------------------------------------------------------------
-VRAM_spr_mono:
-;@----------------------------------------------------------------------------
-
-	ldr r1,=chrDecode
-	
-	mov r4,#24
-	mov r2,#0
-sprLoop3:
-	ldrb r0,[r12],#1
-	ldr r0,[r1,r0,lsl#2]
-	mov r0,r0,lsl#1
-	str r0,[r5],#32
-	ldrb r0,[r12],#1
-	ldr r0,[r1,r0,lsl#2]
-	mov r0,r0,lsl#1
-	str r0,[r5],#32
-	ldrb r0,[r12],#1
-	ldr r0,[r1,r0,lsl#2]
-	mov r0,r0,lsl#1
-	str r0,[r5],#32
-	str r2,[r5],#-92
-	sub r4,r4,#1
-	tst r4,#7
-	addeq r5,r5,#96
-	cmp r4,#3
-	bne sprLoop3
 
 	ldmfd sp!,{r1}
 	bx lr

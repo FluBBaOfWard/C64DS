@@ -31,7 +31,7 @@ machineReset:
 	bl memReset
 	bl gfxReset
 	bl IO_reset
-//	bl SOUND_reset
+	bl soundReset
 	bl cpuReset
 
 	ldmfd sp!,{r4-r11,lr}
