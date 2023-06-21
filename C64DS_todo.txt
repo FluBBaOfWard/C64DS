@@ -1,5 +1,6 @@
 C64 Todo
 
+	Fix loading of Kernal etc.
 	Fix Sprite to Sprite collision.
 	Add machineInit.
 	Add support for loading carts (.crt).
