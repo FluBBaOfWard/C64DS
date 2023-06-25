@@ -41,9 +41,10 @@ To select between the tabs use R & L or the touchscreen.
 * Controller:
   * Autofire: Select if you want autofire.
   * Controller: Which port the controller is plugged into, be prepared to switch often
-  * Swap A/B: Swap which NDS button is mapped to the C64 fire button.
+  * Swap A-B: Swap which NDS button is mapped to the C64 fire button.
 * Display:
-  * Display: Here you can select if you want scaled or unscaled screenmode. Unscaled mode:  L & R buttons scroll the screen up and down.
+  * Display: Here you can select if you want scaled or unscaled screenmode.
+    * Unscaled mode: L & R buttons scroll the screen up and down.
   * Scaling: Here you can select if you want flicker or barebones lineskip.
   * Gamma: Lets you change the gamma ("brightness").
   * Contrast: Lets you change the contrast.
@@ -58,15 +59,20 @@ To select between the tabs use R & L or the touchscreen.
   * Speed: Switch between speed modes.
     * Normal: Game runs at it's normal speed.
     * 200%: Game runs at double speed.
-    * Max: Games can run up to 4 times normal speed (might change).
+    * Max: Games can run up to 4 times normal speed.
     * 50%: Game runs at half speed.
   * Allow Refresh Change: Allow the Wonderswan to change NDS refresh rate.
-  * Autoload State: Toggle Savestate autoloading. Automagically load the savestate associated with the selected game.
-  * Autoload NVRAM: Toggle EEPROM/SRAM autoloading. Automagically load the EEPROM/SRAM associated with the selected game.
-  * Autosave Settings: This will save settings when leaving menu if any changes are made.
+  * Autoload State: Toggle Savestate autoloading. Automagically load the
+   savestate associated with the selected game.
+  * Autoload NVRAM: Toggle EEPROM/SRAM autoloading. Automagically load the
+   EEPROM/SRAM associated with the selected game.
+  * Autosave Settings: This will save settings when leaving menu if any
+   changes are made.
   * Autopause Game: Toggle if the game should pause when opening the menu.
-  * Powersave 2nd Screen: If graphics/light should be turned off for the GUI screen when menu is not active.
-  * Emulator on Bottom: Select if top or bottom screen should be used for emulator, when menu is active emulator screen is allways on top.
+  * Powersave 2nd Screen: If graphics/light should be turned off for the GUI
+   screen when menu is not active.
+  * Emulator on Bottom: Select if top or bottom screen should be used for
+   emulator, when menu is active emulator screen is allways on top.
   * Autosleep: Doesn't work.
 * Debug:
   * Debug Output: Show FPS and logged text.
@@ -81,7 +87,7 @@ Some info about the emulator and game...
 
 ## Controls
 
-There is no convetion on C64 which port is player 1 and which is player 2, so
+There is no convention on C64 which port is player 1 and which is player 2, so
 you will have to switch port a lot. Fire is right now mapped to the B button.
 
 ## Games
