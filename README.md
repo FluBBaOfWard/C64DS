@@ -1,4 +1,4 @@
-# C64DS V0.1.0
+# C64DS V0.2.0
 
 <img align="right" width="220" src="./logo.png" />
 
@@ -44,7 +44,7 @@ To select between the tabs use R & L or the touchscreen.
   * Swap A-B: Swap which NDS button is mapped to the C64 fire button.
 * Display:
   * Display: Here you can select if you want scaled or unscaled screenmode.
-    * Unscaled mode: L & R buttons scroll the screen up and down.
+   Unscaled mode: L & R buttons scroll the screen up and down.
   * Scaling: Here you can select if you want flicker or barebones lineskip.
   * Gamma: Lets you change the gamma ("brightness").
   * Contrast: Lets you change the contrast.

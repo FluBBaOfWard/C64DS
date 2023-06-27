@@ -15,7 +15,7 @@
 #include "ARM6569/Version.h"
 #include "ARM6581/Version.h"
 
-#define EMUVERSION "V0.2.0 2023-06-21"
+#define EMUVERSION "V0.2.0 2023-06-27"
 
 #define ENABLE_LIVE_UI		(1<<12)
 #define ALLOW_SPEED_HACKS	(1<<17)

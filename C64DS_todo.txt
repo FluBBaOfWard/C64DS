@@ -1,5 +1,6 @@
 C64 Todo
 
+	Fix up white spaces for .type STT_FUNC asm functions.
 	Fix loading of Kernal etc.
 	Fix Sprite to Sprite collision.
 	Add machineInit.
