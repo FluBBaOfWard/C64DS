@@ -15,7 +15,7 @@
 #include "ARM6569/Version.h"
 #include "ARM6581/Version.h"
 
-#define EMUVERSION "V0.2.0 2023-06-27"
+#define EMUVERSION "V0.2.1 2024-07-31"
 
 #define ENABLE_LIVE_UI		(1<<12)
 #define ALLOW_SPEED_HACKS	(1<<17)
@@ -44,7 +44,7 @@ const fptr fnList1[] = {selectGame, loadState, saveState, loadNVRAM, saveNVRAM, 
 const fptr fnList2[] = {ui4, ui5, ui6, ui7, ui8};
 const fptr fnList3[] = {uiDummy};
 const fptr fnList4[] = {autoBSet, autoASet, controllerSet, swapABSet};
-const fptr fnList5[] = {scalingSet, flickSet, gammaSet, contrastSet, paletteChange, borderSet};
+const fptr fnList5[] = {scalingSet, flickSet, gammaSet, contrastSet, borderSet};
 const fptr fnList6[] = {machineSet, selectBnWBios, selectColorBios, selectCrystalBios /*languageSet*/};
 const fptr fnList7[] = {speedSet, refreshChgSet, autoStateSet, autoNVRAMSet, autoSettingsSet, autoPauseGameSet, powerSaveSet, screenSwapSet, sleepSet};
 const fptr fnList8[] = {debugTextSet, bgrLayerSet, sprLayerSet, stepFrame};

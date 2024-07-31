@@ -1,10 +1,11 @@
-# C64DS V0.2.0
+# C64DS V0.2.1
 
-<img align="right" width="220" src="./logo.png" />
+<img align="right" width="220" src="./logo.png" alt="C64 logo" />
 
 This is a Commodore 64 (PAL) emulator for the Nintendo DS.
 
 Too much stuff is still missing for it to be more than a novelty.
+
 * Graphics is poorly emulated.
 * Sound is missing ring, sync & filter emulation.
 * Timer emulation is not cycle accurate, missing TA to TB chaining.
@@ -61,7 +62,7 @@ To select between the tabs use R & L or the touchscreen.
     * 200%: Game runs at double speed.
     * Max: Games can run up to 4 times normal speed.
     * 50%: Game runs at half speed.
-  * Allow Refresh Change: Allow the Wonderswan to change NDS refresh rate.
+  * Allow Refresh Change: Allow to change NDS refresh rate (50Hz).
   * Autoload State: Toggle Savestate autoloading. Automagically load the
    savestate associated with the selected game.
   * Autoload NVRAM: Toggle EEPROM/SRAM autoloading. Automagically load the
@@ -76,7 +77,6 @@ To select between the tabs use R & L or the touchscreen.
   * Autosleep: Doesn't work.
 * Debug:
   * Debug Output: Show FPS and logged text.
-  * Disable Foreground: Turn on/off foreground rendering.
   * Disable Background: Turn on/off background rendering.
   * Disable Sprites: Turn on/off sprite rendering.
   * Step Frame: Emulate one frame.
@@ -107,4 +107,4 @@ Fredrik Ahlström
 
 Twitter @TheRealFluBBa
 
-http://www.github.com/FluBBaOfWard
+<https://www.github.com/FluBBaOfWard>

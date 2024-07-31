@@ -14,6 +14,13 @@ extern u32 EMUinput;
 
 void SetC64Key(int x, int y, bool touch);
 
+/**
+ * Convert device input keys to target keys.
+ * @param input NDS/GBA keys
+ * @return The converted input.
+ */
+int convertInput(int input);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

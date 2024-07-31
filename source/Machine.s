@@ -144,7 +144,7 @@ memaps:
 	bne memap2
 
 ;@------------------------------------------
-flush:		;@ Update cpu_pc & LastBank
+flush:		;@ Update m6502pc & LastBank
 ;@------------------------------------------
 	ldr r1,[m6502ptr,#m6502LastBank]
 	sub m6502pc,m6502pc,r1
@@ -155,7 +155,7 @@ flush:		;@ Update cpu_pc & LastBank
 ;@----------------------------------------------------------------------------
 BankSwitch_R:
 ;@----------------------------------------------------------------------------
-	ldrb r1,[m6502zpage]		;@ Dir
+	ldrb r1,[m6502zpage]	;@ Dir
 	ldrb r0,[m6502zpage,#1]	;@ Data
 	ldr r2,data_out
 	orr r2,r2,#0x17
@@ -170,7 +170,7 @@ BankSwitch_R:
 ;@----------------------------------------------------------------------------
 BankSwitch_0_W:
 ;@----------------------------------------------------------------------------
-	ldrb r1,[m6502zpage]		;@ Dir
+	ldrb r1,[m6502zpage]	;@ Dir
 	cmp r0,r1
 	bxeq lr
 	strb r0,[m6502zpage]
